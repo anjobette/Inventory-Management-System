@@ -22,26 +22,31 @@ const Sidebar: React.FC = () => {
         '/request-management': 'request-management',
         '/order-management': 'order-management',
         '/bus-management': 'bus-management',
+        '/notification': 'notification',
+        '/history': 'history',
+        '/reports': 'reports'
     };
 
-    // const stockSubItems = ['/consumables', '/machine-equipments'];
+    const activitySubItems = ['/notification', '/history', '/reports'];
 
     // Set activeItem only on route change
     useEffect(() => {
-        const current = routeToItem[pathname] || null;
+        const current = routeToItem[pathname] ||
+            (activitySubItems.includes(pathname) ? pathname.slice(1) : null);
         setActiveItem(current);
     }, [pathname]);
 
-    // const toggleSubMenu = (id: string) => {
-    //     setOpenSubMenu(prev => (prev === id ? null : id));
-    // };
+
+    const toggleSubMenu = (id: string) => {
+        setOpenSubMenu(prev => (prev === id ? null : id));
+    };
 
     // const toggleSidebar = () => {
     //     setIsCollapsed(!isCollapsed);
     // };
 
-    // Determine if a stock subitem is active
-    // const isStockItemActive = stockSubItems.includes(pathname);
+    // Determine if an activity subitem is active
+    const isActivityItemActive = activitySubItems.includes(pathname);
 
     return (
         // <div className={`sidebar ${isCollapsed ? 'collapsed' : ''} shadow-lg`} id="sidebar">
@@ -61,35 +66,6 @@ const Sidebar: React.FC = () => {
                         <span>Dashboard</span>
                     </Link>
 
-                    {/* Sidebar Sub-item */}
-                    {/* <div
-                        className={`nav-item module ${isStockItemActive ? 'active' : ''}`}
-                        onClick={() => toggleSubMenu('stock-submenu')}
-                    >
-                        <i className="ri-box-3-line" />
-                        <span>Stock Management</span>
-                        <i className={`dropdown-arrow ri-arrow-down-s-line ${openSubMenu === 'stock-submenu' ? 'rotate' : ''}`} />
-                    </div>
-
-                    {openSubMenu === 'stock-submenu' && (
-                        <div className="sub-menu active">
-                            <Link
-                                href="/consumables"
-                                className={`sub-item ${activeItem === 'consumables' ? 'active' : ''}`}
-                                onClick={() => setActiveItem('consumables')}
-                            >
-                                Consumable Stocks
-                            </Link>
-                            <Link
-                                href="/machine-equipments"
-                                className={`sub-item ${activeItem === 'machines' ? 'active' : ''}`}
-                                onClick={() => setActiveItem('machines')}
-                            >
-                                Machines and Equipments
-                            </Link>
-                        </div>
-                    )} */}
-                    
                     <Link
                         href="/stock-management"
                         className={`nav-item ${activeItem === 'stock-management' ? 'active' : ''}`}
@@ -125,6 +101,44 @@ const Sidebar: React.FC = () => {
                         <i className="ri-bus-line" />
                         <span>Bus Management</span>
                     </Link>
+
+                    {/* Sidebar Sub-item */}
+                    <div
+                        className={`nav-item module ${isActivityItemActive ? 'active' : ''}`}
+                        onClick={() => toggleSubMenu('activity-submenu')}
+                    >
+                        <i className="ri-booklet-line" />
+                        <span>Activities</span>
+                        <i className={`dropdown-arrow ri-arrow-down-s-line ${openSubMenu === 'activity-submenu' ? 'rotate' : ''}`} />
+                    </div>
+
+                    {openSubMenu === 'activity-submenu' && (
+                        <div className="sub-menu active">
+                            <Link
+                                href="/notification"
+                                className={`sub-item ${activeItem === 'notification' ? 'active' : ''}`}
+                                onClick={() => setActiveItem('notification')}
+                            >
+                                Notifications
+                            </Link>
+
+                            <Link
+                                href="/history"
+                                className={`sub-item ${activeItem === 'history' ? 'active' : ''}`}
+                                onClick={() => setActiveItem('history')}
+                            >
+                                History
+                            </Link>
+                            <Link
+                                href="/reports"
+                                className={`sub-item ${activeItem === 'reports' ? 'active' : ''}`}
+                                onClick={() => setActiveItem('reports')}
+                            >
+                                Reports
+                            </Link>
+                        </div>
+                    )}
+
                 </div>
 
                 <div className="logout">

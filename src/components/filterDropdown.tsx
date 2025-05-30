@@ -7,7 +7,7 @@ export interface FilterOption {
 }
 
 // Types of filter fields we support
-export type FilterFieldType = 'dateRange' | 'checkbox' | 'radio' | 'select' | 'text';
+export type FilterFieldType = 'dateRange' | 'checkbox' | 'radio';
 
 // Definition for a single filter section
 export interface FilterSection {
@@ -55,12 +55,6 @@ export default function FilterDropdown({
                         defaults[section.id] = [];
                         break;
                     case 'radio':
-                    case 'select':
-                        defaults[section.id] = section.options && section.options.length > 0 ? section.options[0].id : '';
-                        break;
-                    case 'text':
-                        defaults[section.id] = '';
-                        break;
                 }
             }
         });
@@ -209,36 +203,6 @@ export default function FilterDropdown({
                                 {option.label}
                             </div>
                         ))}
-                    </div>
-                );
-
-            case 'select':
-                return (
-                    <div className="select-field">
-                        <select
-                            value={filterValues[section.id] || ''}
-                            onChange={(e) => handleSelectChange(section.id, e.target.value)}
-                            className="filter-select"
-                        >
-                            {section.options?.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                );
-
-            case 'text':
-                return (
-                    <div className="text-field">
-                        <input
-                            type="text"
-                            value={filterValues[section.id] || ''}
-                            onChange={(e) => handleTextChange(section.id, e.target.value)}
-                            placeholder={section.placeholder || ""}
-                            className="filter-text-input"
-                        />
                     </div>
                 );
 

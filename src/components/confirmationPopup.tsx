@@ -6,12 +6,14 @@ import "@/styles/popup.css";
 interface ConfirmationPopupProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onConfirm: () => void;
+	onConfirm?: () => void;
 	title: string;
 	message: string;
 	confirmText?: string;
 	cancelText?: string;
 	variant?: "warning" | "success" | "error" | "info";
+	showConfirmButton?: boolean;
+	showCancelButton?: boolean;
 }
 
 export default function ConfirmationPopup({
@@ -22,7 +24,9 @@ export default function ConfirmationPopup({
 	message,
 	confirmText = "Confirm",
 	cancelText = "Cancel",
-	variant = "info"
+	variant = "info",
+	showConfirmButton = true,
+	showCancelButton = true
 }: ConfirmationPopupProps) {
 	if (!isOpen) return null;
 
@@ -64,21 +68,25 @@ export default function ConfirmationPopup({
 				</div>
 
 				<div className="popup-actions">
-					<button
-						className="cancel-btn"
-						onClick={onClose}
-					>
-						{cancelText}
-					</button>
-					<button
-						className="confirm-btn"
-						onClick={() => {
-							onConfirm();
-							onClose();
-						}}
-					>
-						{confirmText}
-					</button>
+					{showCancelButton && (
+						<button
+							className="cancel-btn"
+							onClick={onClose}
+						>
+							{cancelText}
+						</button>
+					)}
+					{showConfirmButton && onConfirm && (
+						<button
+							className="confirm-btn"
+							onClick={() => {
+								onConfirm();
+								onClose();
+							}}
+						>
+							{confirmText}
+						</button>
+					)}
 				</div>
 			</div>
 		</div>,

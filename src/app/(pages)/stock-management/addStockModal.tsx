@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import ConfirmationPopup from "@/components/confirmationPopup";
+
+import {
+	showStockSaveConfirmation, showStockSavedSuccess,
+	showCloseWithoutSavingConfirmation
+} from "@/utils/sweetAlert";
+
 import "@/styles/forms.css";
 
 // Export the interface so it can be imported by other components
@@ -43,8 +48,6 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 	const [stockForms, setStockForms] = useState<StockForm[]>([initialFormState]);
 	const [formErrors, setFormErrors] = useState<FormError[]>([{}]);
 	const [isDirty, setIsDirty] = useState(false);
-	const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
-	const [showClosingConfirmation, setShowClosingConfirmation] = useState(false);
 
 	// Track if any form has been modified
 	useEffect(() => {
@@ -113,23 +116,26 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 		return errors.every((err) => Object.keys(err).length === 0);
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		const isValid = validateForm();
-		if (isValid) {
-			setShowSaveConfirmation(true);
+		if (!validateForm()) return;
+
+		const result = await showStockSaveConfirmation(stockForms.length);
+		if (result.isConfirmed) {
+			onSave(stockForms);
+			await showStockSavedSuccess(stockForms.length);
 		}
 	};
 
-	const handleConfirmSave = () => {
-		onSave(stockForms);
-	};
+	const handleClose = async () => {
+		if (!isDirty) {
+			onClose();
+			return;
+		}
 
-	const handleClose = () => {
-		if (isDirty) {
-			setShowClosingConfirmation(true);
-		} else {
+		const result = await showCloseWithoutSavingConfirmation();
+		if (result.isConfirmed) {
 			onClose();
 		}
 	};
@@ -165,7 +171,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 								<option value="2">Item 2</option>
 								<option value="3">Item 3</option>
 								<option value="4">Item 4</option>
-								<option value="5 Mask">Item 5</option>
+								<option value="5">Item 5</option>
 							</select>
 							<p className="add-error-message">{formErrors[index]?.name}</p>
 						</div>
@@ -285,7 +291,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 							</div>
 						</div>
 
-						{/* Expiration Date */}
+						{/* Expiration */}
 						{form.category === "consumable" && (
 							<div className="form-group">
 								<label>Expiration Date</label>
@@ -326,29 +332,6 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 				</button>
 			</div>
 
-			{/* Save Confirmation */}
-			<ConfirmationPopup
-				isOpen={showSaveConfirmation}
-				onClose={() => setShowSaveConfirmation(false)}
-				onConfirm={handleConfirmSave}
-				title="Confirm Save"
-				message="Are you sure you want to save these stock items?"
-				confirmText="Save"
-				cancelText="Cancel"
-				variant="success"
-			/>
-
-			{/* Close Confirmation */}
-			<ConfirmationPopup
-				isOpen={showClosingConfirmation}
-				onClose={() => setShowClosingConfirmation(false)}
-				onConfirm={onClose}
-				title="Unsaved Changes"
-				message="You have unsaved changes. Are you sure you want to close without saving?"
-				confirmText="Close Without Saving"
-				cancelText="Continue Editing"
-				variant="warning"
-			/>
 		</>
 	);
 }

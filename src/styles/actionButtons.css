@@ -1,0 +1,48 @@
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.action-btn {
+    padding: 3px 6px;
+    font-size: 14px;
+    border-radius: 4px;
+    color: var(--foreground-color);
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    border: none;
+}
+
+.action-btn.view {
+    background-color: var(--success-color);
+}
+
+.action-btn.edit {
+    background-color: var(--info-color);
+}
+
+.action-btn.delete {
+    background-color: var(--error-color);
+}
+
+/* ----- ACTION BUTTONS: HOVER STYLING ----- */
+.action-btn.view:hover:not(.disabled) {
+    background-color: var(--success-hover-color);
+}
+
+.action-btn.edit:hover:not(.disabled) {
+    background-color: var(--info-hover-color);
+}
+
+.action-btn.delete:hover:not(.disabled) {
+    background-color: var(--error-hover-color);
+}
+
+/* ----- DISABLED STATE STYLING ----- */
+.action-btn.disabled {
+    background-color: var(--expired-chip-bg-color);
+    color: var(--secondary-text-color);
+    opacity: 0.5;
+    cursor: not-allowed;
+}

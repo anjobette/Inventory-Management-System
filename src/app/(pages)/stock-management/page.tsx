@@ -1,22 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import MoreMenu from "@/components/moreMenu";
+import React, { useState, useMemo } from "react";
+import ActionButtons from "@/components/actionButtons";
 import ModalManager from "@/components/modalManager";
-import Snackbar from "@/components/snackbar";
 import FilterDropdown, { FilterSection } from "@/components/filterDropdown";
+import PaginationComponent from "@/components/pagination";
+import { showStockDeleteConfirmation, showStockDeletedSuccess } from "@/utils/sweetAlert";
 
 import AddStockModal from "./addStockModal";
 import ViewStockModal from "./viewStockModal";
 import EditStockModal from "./editStockModal";
-import DeleteStockModal from "./deleteStockModal";
 import { StockForm } from "./addStockModal";
 
 import "@/styles/filters.css"
 import "@/styles/tables.css"
 import "@/styles/chips.css"
-import "@/styles/pagination.css"
-import "@/styles/snackbar.css"
 
 const hardcodedData = [
     {
@@ -59,6 +57,47 @@ const hardcodedData = [
         status: "expired",
         reorder: 3,
     },
+    // Add more dummy data to test pagination
+    {
+        id: 6,
+        name: "Example Item F",
+        quantity: 30,
+        unit: "kg",
+        status: "available",
+        reorder: 12,
+    },
+    {
+        id: 7,
+        name: "Example Item G",
+        quantity: 5,
+        unit: "pcs",
+        status: "low-stock",
+        reorder: 15,
+    },
+    {
+        id: 8,
+        name: "Example Item H",
+        quantity: 0,
+        unit: "kg",
+        status: "out-of-stock",
+        reorder: 20,
+    },
+    {
+        id: 9,
+        name: "Example Item I",
+        quantity: 20,
+        unit: "pcs",
+        status: "maintenance",
+        reorder: 8,
+    },
+    {
+        id: 10,
+        name: "Example Item J",
+        quantity: 16,
+        unit: "pcs",
+        status: "expired",
+        reorder: 3,
+    },
 ];
 
 export default function StocksManagement() {
@@ -68,13 +107,33 @@ export default function StocksManagement() {
     const [activeRow, setActiveRow] = useState<any>(null);
     const [modalContent, setModalContent] = useState<React.ReactNode>(null);
 
-    // for snackbar
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarType, setSnackbarType] = useState<"success" | "error" | "info" | "warning">("info");
-
     // For filtering
     const [filteredData, setFilteredData] = useState(hardcodedData);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // default number of rows per page
+
+    // Calculate paginated data
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return filteredData.slice(startIndex, endIndex);
+    }, [filteredData, currentPage, pageSize]);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredData.length / pageSize);
+
+    // Handle page change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    // Handle page size change
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1); // Reset to first page when changing page size
+    };
 
     // Filter sections
     const filterSections: FilterSection[] = [
@@ -90,7 +149,7 @@ export default function StocksManagement() {
             type: "checkbox",
             options: [
                 { id: "consumables", label: "Consumables" },
-                { id: "machine-equipment", label: "Machine & Equipments" }
+                { id: "mach-equip", label: "Machine & Equipments" }
             ]
         },
         {
@@ -156,6 +215,7 @@ export default function StocksManagement() {
         }
 
         setFilteredData(newData);
+        setCurrentPage(1); // Reset to first page when filters change
     };
 
     // for items status formatting
@@ -202,12 +262,8 @@ export default function StocksManagement() {
                 />;
                 break;
             case "delete-stock":
-                content = <DeleteStockModal
-                    item={rowData}
-                    onConfirm={handleDeleteConfirm}
-                    onCancel={closeModal}
-                />;
-                break;
+                handleDeleteStock(rowData);
+                return;
             default:
                 content = null;
         }
@@ -223,25 +279,11 @@ export default function StocksManagement() {
         setActiveRow(null);
     };
 
-    // snackbar
-    const showSnackbar = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
-        setSnackbarMessage(message);
-        setSnackbarType(type);
-        setSnackbarVisible(true);
-    };
-
     // Handle add stocks
     const handleAddStock = (stockForms: StockForm[]) => {
         console.log("Saving forms:", stockForms);
         // Logic to add multiple stock items to the data
         // In a real app, this would likely be an API call
-
-        const itemCount = stockForms.length;
-        const message = itemCount === 1
-            ? "Stock item added successfully!"
-            : `${itemCount} stock items added successfully!`;
-
-        showSnackbar(message, "success");
         closeModal();
     };
 
@@ -253,26 +295,28 @@ export default function StocksManagement() {
         closeModal();
     };
 
-    // Hadle delete stocks
-    const handleDeleteConfirm = () => {
-        console.log("Deleted row with id:", activeRow?.id);
-        // Logic to delete the item from the data
-        // In a real app, this would likely be an API call
-        closeModal();
-    };
+   // Handle delete stocks
+        const handleDeleteStock = async (rowData: any) => {
+            const result = await showStockDeleteConfirmation(rowData.name);
+    
+            if (result.isConfirmed) {
+                await showStockDeletedSuccess();
+                console.log("Deleted row with id:", rowData.id);
+                // Logic to delete the item from the data
+                // In a real app, this would likely be an API call
+            }
+        };
 
     return (
         <div className="card">
             <h1 className="title">Stock Management</h1>
 
-            {/* Search Engine and Filters */}
+            {/* Search Engine and Status Filters */}
             <div className="elements">
                 <div className="entries">
                     <div className="search">
-                        <input type="text" placeholder="Search" />
-                        <button>
-                            <i className="ri-search-line"></i>
-                        </button>
+                        <i className="ri-search-line" />
+                        <input type="text" placeholder="Search here..." />
                     </div>
 
                     {/* Filter Button with Dropdown */}
@@ -305,11 +349,11 @@ export default function StocksManagement() {
                                     <th>Unit Measure</th>
                                     <th>Status</th>
                                     <th>Reorder Level</th>
-                                    <th></th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="table-body">
-                                {filteredData.map(item => (
+                                {paginatedData.map(item => (
                                     <tr
                                         key={item.id}
                                         className={selectedIds.includes(item.id) ? "selected" : ""}
@@ -324,7 +368,7 @@ export default function StocksManagement() {
                                         </td>
                                         <td>{item.reorder}</td>
                                         <td>
-                                            <MoreMenu
+                                            <ActionButtons
                                                 onView={() => openModal("view-stock", item)}
                                                 onEdit={() => openModal("edit-stock", item)}
                                                 onDelete={() => openModal("delete-stock", item)}
@@ -338,19 +382,13 @@ export default function StocksManagement() {
                 </div>
 
                 {/* Pagination */}
-                <div className="pagination">
-                    <button className="page-btn">
-                        <i className="ri-arrow-left-s-line"></i>
-                    </button>
-                    <button className="page-btn active">1</button>
-                    <button className="page-btn">2</button>
-                    <button className="page-btn">3</button>
-                    <button className="page-btn">4</button>
-                    <button className="page-btn">5</button>
-                    <button className="page-btn">
-                        <i className="ri-arrow-right-s-line"></i>
-                    </button>
-                </div>
+                <PaginationComponent
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                />
             </div>
 
             {/* Dynamic Modal Manager */}
@@ -358,14 +396,6 @@ export default function StocksManagement() {
                 isOpen={isModalOpen}
                 onClose={closeModal}
                 modalContent={modalContent}
-            />
-
-            {/* Snackbar */}
-            <Snackbar
-                message={snackbarMessage}
-                isVisible={snackbarVisible}
-                onClose={() => setSnackbarVisible(false)}
-                type={snackbarType}
             />
 
         </div>

@@ -15,10 +15,10 @@
 	position: absolute;
 	right: 150%;
 	background: var(--foreground-color);
-	border: 1px solid var(--table-header-color);
+    border: 1px solid var(--table-row-color);
 	border-radius: 8px;
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	min-width: 120px;
+	min-width: 125px;
 	z-index: 50;
 }
 
@@ -28,7 +28,7 @@ tr .menu-dropdown {
 }
 
 /* For rows 6–10: flip the dropdown above */
-tr:nth-child(n+8) .menu-dropdown {
+tr:nth-child(n+5) .menu-dropdown {
 	top: auto;
 	bottom: 50%;
 }
@@ -42,10 +42,11 @@ tr:nth-child(n+8) .menu-dropdown {
     text-align: left;
     cursor: pointer;
     font-size: 14px;
+    color: var(--secondary-text-color);
 }
 
 .menu-item i {
-    margin-right: 10px;
+    margin-right: 8px;
 }
 
 .menu-item:hover {

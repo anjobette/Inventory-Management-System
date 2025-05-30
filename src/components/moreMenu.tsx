@@ -6,9 +6,10 @@ interface MoreMenuProps {
     onView?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
+    onDownload?: () => void;
 }
 
-const MoreMenu = ({ onView, onEdit, onDelete }: MoreMenuProps) => {
+const MoreMenu = ({ onView, onEdit, onDelete, onDownload }: MoreMenuProps) => {
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +33,11 @@ const MoreMenu = ({ onView, onEdit, onDelete }: MoreMenuProps) => {
             </button>
             {open && (
                 <div className="menu-dropdown">
+                    {onDownload && (
+                        <button className="menu-item" onClick={onDownload}>
+                            <i className="ri-file-download-line"></i> Download
+                        </button>
+                    )}
                     {onView && (
                         <button className="menu-item" onClick={onView}>
                             <i className="ri-eye-line"></i> View
