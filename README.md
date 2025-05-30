@@ -1,5 +1,7 @@
 This project is being developed for the Agila Bus Transport Corp. Inventory Management System
 
+**Note:** DO NOT CLONE THE REPOSITORY UNLESS YOU'RE ONE OF THE MEMBERS OF GROUP 8! Download your desired branch only as a ZIP Folder if not a member!
+
 ## Getting Started
 
 **Dowloading Project as ZIP Folder:**
