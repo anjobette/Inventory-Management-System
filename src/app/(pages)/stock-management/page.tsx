@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ActionButtons from "@/components/actionButtons";
 import ModalManager from "@/components/modalManager";
 import FilterDropdown, { FilterSection } from "@/components/filterDropdown";
 import PaginationComponent from "@/components/pagination";
-import { showStockDeleteConfirmation, showStockDeletedSuccess } from "@/utils/sweetAlert";
+import { showStockDeleteConfirmation, showStockDeletedSuccess, showStockSaveError } from "@/utils/sweetAlert";
 
 import AddStockModal from "./addStockModal";
 import ViewStockModal from "./viewStockModal";
@@ -16,126 +16,78 @@ import "@/styles/filters.css"
 import "@/styles/tables.css"
 import "@/styles/chips.css"
 
-const hardcodedData = [
-    {
-        id: 1,
-        name: "Example Item A",
-        quantity: 50,
-        unit: "kg",
-        status: "available",
-        reorder: 10,
-    },
-    {
-        id: 2,
-        name: "Example Item B",
-        quantity: 0,
-        unit: "pcs",
-        status: "out-of-stock",
-        reorder: 5,
-    },
-    {
-        id: 3,
-        name: "Example Item C",
-        quantity: 20,
-        unit: "pcs",
-        status: "low-stock",
-        reorder: 8,
-    },
-    {
-        id: 4,
-        name: "Example Item D",
-        quantity: 20,
-        unit: "pcs",
-        status: "maintenance",
-        reorder: 8,
-    },
-    {
-        id: 5,
-        name: "Example Item E",
-        quantity: 16,
-        unit: "pcs",
-        status: "expired",
-        reorder: 3,
-    },
-    // Add more dummy data to test pagination
-    {
-        id: 6,
-        name: "Example Item F",
-        quantity: 30,
-        unit: "kg",
-        status: "available",
-        reorder: 12,
-    },
-    {
-        id: 7,
-        name: "Example Item G",
-        quantity: 5,
-        unit: "pcs",
-        status: "low-stock",
-        reorder: 15,
-    },
-    {
-        id: 8,
-        name: "Example Item H",
-        quantity: 0,
-        unit: "kg",
-        status: "out-of-stock",
-        reorder: 20,
-    },
-    {
-        id: 9,
-        name: "Example Item I",
-        quantity: 20,
-        unit: "pcs",
-        status: "maintenance",
-        reorder: 8,
-    },
-    {
-        id: 10,
-        name: "Example Item J",
-        quantity: 16,
-        unit: "pcs",
-        status: "expired",
-        reorder: 3,
-    },
-];
+// Type definitions based on your Prisma schema
+interface InventoryItem {
+    item_id: string;
+    f_item_id: string;
+    item_name: string;
+    current_stock: number;
+    unit_measure: string;
+    status: string;
+    category_id: string;
+    reorder_level: number;
+    batches: {
+        batch_id: string;
+        usable_quantity: number;
+        defective_quantity: number;
+        missing_quantity: number;
+        expiration_date: string | null;
+    }[];
+}
+
+interface ApiResponse {
+    success: boolean;
+    items: InventoryItem[];
+    error?: string;
+}
 
 export default function StocksManagement() {
+    // Data state
+    const [stockItems, setStockItems] = useState<InventoryItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Search and filter state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+
+    // Pagination state - Updated to match old file's approach
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Default to 5 like the old file
+
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeRow, setActiveRow] = useState<any>(null);
     const [modalContent, setModalContent] = useState<React.ReactNode>(null);
 
-    // For filtering
-    const [filteredData, setFilteredData] = useState(hardcodedData);
+    // Fetch data from API
+    useEffect(() => {
+        fetchStockItems();
+    }, []);
 
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5); // default number of rows per page
+    const fetchStockItems = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/item');
+            const data: ApiResponse = await response.json();
 
-    // Calculate paginated data
-    const paginatedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * pageSize;
-        const endIndex = startIndex + pageSize;
-        return filteredData.slice(startIndex, endIndex);
-    }, [filteredData, currentPage, pageSize]);
-
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredData.length / pageSize);
-
-    // Handle page change
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
+            if (data.success) {
+                setStockItems(data.items);
+                setError(null);
+            } else {
+                setError(data.error || 'Failed to fetch stock items');
+            }
+        } catch (err) {
+            const errorMessage = 'Error fetching stock items';
+            setError(errorMessage);
+            console.error('Error fetching stock items:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Handle page size change
-    const handlePageSizeChange = (size: number) => {
-        setPageSize(size);
-        setCurrentPage(1); // Reset to first page when changing page size
-    };
-
-    // Filter sections
+     // Filter sections for the filter dropdown - Enhanced with proper categories
     const filterSections: FilterSection[] = [
         {
             id: "dateRange",
@@ -149,7 +101,7 @@ export default function StocksManagement() {
             type: "checkbox",
             options: [
                 { id: "consumables", label: "Consumables" },
-                { id: "mach-equip", label: "Machine & Equipments" }
+                { id: "machine-equipment", label: "Machine & Equipments" }
             ]
         },
         {
@@ -157,11 +109,11 @@ export default function StocksManagement() {
             title: "Status",
             type: "checkbox",
             options: [
-                { id: "available", label: "Available" },
-                { id: "out-of-stock", label: "Out of Stock" },
-                { id: "maintenance", label: "Under Maintenance" },
-                { id: "low-stock", label: "Low Stock" },
-                { id: "expired", label: "Expired" }
+                { id: "AVAILABLE", label: "Available" },
+                { id: "OUT_OF_STOCK", label: "Out of Stock" },
+                { id: "UNDER_MAINTENANCE", label: "Under Maintenance" },
+                { id: "LOW_STOCK", label: "Low Stock" },
+                { id: "EXPIRED", label: "Expired" }
             ]
         },
         {
@@ -169,10 +121,11 @@ export default function StocksManagement() {
             title: "Sort By",
             type: "radio",
             options: [
-                { id: "name", label: "Item Name" },
-                { id: "quantity", label: "Item Quantity" }
+                { id: "item_name", label: "Item Name" },
+                { id: "current_stock", label: "Current Stock" },
+                { id: "reorder_level", label: "Reorder Level" }
             ],
-            defaultValue: "name"
+            defaultValue: "item_name"
         },
         {
             id: "order",
@@ -186,53 +139,154 @@ export default function StocksManagement() {
         }
     ];
 
-    // Handle filter application
-    const handleApplyFilters = (filterValues: Record<string, any>) => {
-        console.log("Applied filters:", filterValues);
+    // Enhanced filter and search logic
+    const filteredAndSearchedItems = useMemo(() => {
+        let filtered = [...stockItems];
 
-        // In a real application, you would filter your data based on these values
-        // For now, we'll just log them and keep the original data
+        // Apply search filter
+        if (searchTerm.trim()) {
+            filtered = filtered.filter(item =>
+                item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.unit_measure.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
 
-        // Example implementation for filtering and sorting:
-        let newData = [...hardcodedData];
-
-        // Filter by status if selected
+        // Apply status filter
         if (filterValues.status && filterValues.status.length > 0) {
-            newData = newData.filter(item => filterValues.status.includes(item.status));
+            filtered = filtered.filter(item => filterValues.status.includes(item.status));
         }
 
-        // Sort by name or quantity
-        if (filterValues.sortBy === "name") {
-            newData.sort((a, b) => {
-                const sortOrder = filterValues.order === "asc" ? 1 : -1;
-                return a.name.localeCompare(b.name) * sortOrder;
-            });
-        } else if (filterValues.sortBy === "quantity") {
-            newData.sort((a, b) => {
-                const sortOrder = filterValues.order === "asc" ? 1 : -1;
-                return (a.quantity - b.quantity) * sortOrder;
+        // Apply categories filter (if you have category mapping)
+        if (filterValues.categories && filterValues.categories.length > 0) {
+            // You might need to implement category mapping based on your category_id
+            // For now, this is a placeholder - adjust based on your actual category implementation
+            filtered = filtered.filter(item => {
+                // Map category_id to category names or implement your category logic here
+                return true; // Placeholder - implement based on your categories
             });
         }
 
-        setFilteredData(newData);
+        // Apply date range filter (if you have date fields)
+        if (filterValues.dateRange && (filterValues.dateRange.from || filterValues.dateRange.to)) {
+            // Implement date filtering based on your date fields
+            // This might be based on batch expiration dates or other date fields
+            // For now, this is a placeholder
+        }
+
+        // Apply sorting
+        const sortBy = filterValues.sortBy || "item_name";
+        const order = filterValues.order || "asc";
+
+        filtered.sort((a, b) => {
+            let aValue, bValue;
+
+            switch (sortBy) {
+                case "item_name":
+                    aValue = a.item_name.toLowerCase();
+                    bValue = b.item_name.toLowerCase();
+                    break;
+                case "current_stock":
+                    aValue = a.current_stock;
+                    bValue = b.current_stock;
+                    break;
+                case "reorder_level":
+                    aValue = a.reorder_level;
+                    bValue = b.reorder_level;
+                    break;
+                default:
+                    aValue = a.item_name.toLowerCase();
+                    bValue = b.item_name.toLowerCase();
+            }
+
+            if (typeof aValue === "string") {
+                const comparison = aValue.localeCompare(bValue);
+                return order === "asc" ? comparison : -comparison;
+            } else {
+                const comparison = aValue - bValue;
+                return order === "asc" ? comparison : -comparison;
+            }
+        });
+
+        return filtered;
+    }, [stockItems, searchTerm, filterValues]);
+
+    const totalPages = Math.ceil(filteredAndSearchedItems.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedItems = filteredAndSearchedItems.slice(startIndex, startIndex + pageSize);
+
+    // Generate page numbers for pagination - improved version
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        if (endPage - startPage < maxVisiblePages - 1) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
+
+    // Handle filter application - enhanced from old file
+    const handleApplyFilters = (newFilterValues: Record<string, any>) => {
+        console.log("Applied filters:", newFilterValues);
+        setFilterValues(newFilterValues);
         setCurrentPage(1); // Reset to first page when filters change
     };
 
-    // for items status formatting
+    // Handle search input change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    // Handle pagination - updated to support page size changes like old file
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1); // Reset to first page when changing page size
+    };
+
+    // Status formatting function
     const formatStatus = (status: string) => {
         switch (status) {
-            case "available":
+            case "AVAILABLE":
                 return "Available";
-            case "out-of-stock":
+            case "OUT_OF_STOCK":
                 return "Out of Stock";
-            case "low-stock":
+            case "LOW_STOCK":
                 return "Low Stock";
-            case "maintenance":
+            case "UNDER_MAINTENANCE":
                 return "Under Maintenance";
-            case "expired":
+            case "EXPIRED":
                 return "Expired";
             default:
                 return status;
+        }
+    };
+
+    // Get CSS class for status
+    const getStatusClass = (status: string) => {
+        switch (status) {
+            case "AVAILABLE":
+                return "available";
+            case "OUT_OF_STOCK":
+                return "out-of-stock";
+            case "LOW_STOCK":
+                return "low-stock";
+            case "UNDER_MAINTENANCE":
+                return "maintenance";
+            case "EXPIRED":
+                return "expired";
+            default:
+                return status.toLowerCase().replace(/_/g, '-');
         }
     };
 
@@ -296,16 +350,60 @@ export default function StocksManagement() {
     };
 
    // Handle delete stocks
-        const handleDeleteStock = async (rowData: any) => {
-            const result = await showStockDeleteConfirmation(rowData.name);
-    
+    const handleDeleteStock = async (rowData: any) => {
+        try {
+            const result = await showStockDeleteConfirmation(rowData.name || rowData.item_name);
+
             if (result.isConfirmed) {
-                await showStockDeletedSuccess();
-                console.log("Deleted row with id:", rowData.id);
-                // Logic to delete the item from the data
-                // In a real app, this would likely be an API call
+                // Call the soft delete API
+                const response = await fetch(`/api/item`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ item_id: rowData.item_id }),
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    await showStockDeletedSuccess(rowData.name || rowData.item_name);
+                    window.location.reload();
+                    console.log("Deleted row with id:", rowData.id);
+                } else {
+                        await showStockSaveError(data.message);
+                    }
             }
-        };
+        } catch (error) {
+            console.error('Error deleting stock:', error);
+            await showStockSaveError('An unexpected error occurred');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="card">
+                <h1 className="title">Stock Management</h1>
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    Loading stock items...
+                </div>
+            </div>
+        );
+    }
+
+    if (error && stockItems.length === 0) {
+        return (
+            <div className="card">
+                <h1 className="title">Stock Management</h1>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
+                    Error: {error}
+                    <br />
+                    <button onClick={fetchStockItems} style={{ marginTop: '1rem' }}>
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="card">
@@ -316,7 +414,12 @@ export default function StocksManagement() {
                 <div className="entries">
                     <div className="search">
                         <i className="ri-search-line" />
-                        <input type="text" placeholder="Search here..." />
+                        <input
+                            type="text"
+                            placeholder="Search item name or unit measure"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                        />
                     </div>
 
                     {/* Filter Button with Dropdown */}
@@ -353,20 +456,33 @@ export default function StocksManagement() {
                                 </tr>
                             </thead>
                             <tbody className="table-body">
-                                {paginatedData.map(item => (
-                                    <tr
-                                        key={item.id}
-                                        className={selectedIds.includes(item.id) ? "selected" : ""}
-                                    >
-                                        <td>{item.name}</td>
-                                        <td>{item.quantity}</td>
-                                        <td>{item.unit}</td>
-                                        <td>
-                                            <span className={`chip ${item.status}`}>
-                                                {formatStatus(item.status)}
-                                            </span>
+                                {paginatedItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="no-records">
+                                            {searchTerm || Object.keys(filterValues).some(key => 
+                                                filterValues[key] && 
+                                                (Array.isArray(filterValues[key]) ? filterValues[key].length > 0 : true)
+                                            )
+                                                ? 'No items matched'
+                                                : 'No stock items available'
+                                            }
                                         </td>
-                                        <td>{item.reorder}</td>
+                                    </tr>
+                                ) : (
+                                    paginatedItems.map(item => (
+                                        <tr
+                                            key={item.item_id}
+                                            className={selectedIds.includes(parseInt(item.item_id)) ? "selected" : ""}
+                                        >
+                                            <td>{item.item_name}</td>
+                                            <td>{item.current_stock}</td>
+                                            <td>{item.unit_measure}</td>
+                                            <td>
+                                                <span className={`chip ${getStatusClass(item.status)}`}>
+                                                    {formatStatus(item.status)}
+                                                </span>
+                                            </td>
+                                            <td>{item.reorder_level}</td>
                                         <td>
                                             <ActionButtons
                                                 onView={() => openModal("view-stock", item)}
@@ -375,7 +491,8 @@ export default function StocksManagement() {
                                             />
                                         </td>
                                     </tr>
-                                ))}
+                                ))
+                                )}
                             </tbody>
                         </table>
                     </div>

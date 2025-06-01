@@ -1,5 +1,5 @@
 import Swal from 'sweetalert2';
-import "@/styles/popup.css"
+import "@/styles/popup.css";
 
 //-------------------- GENERAL ALERTS -------------------//
 
@@ -82,11 +82,53 @@ export const showStockSavedSuccess = (count: number) => {
     });
 };
 
+// ----- Duplicate Item Error ----- //
+export const showDuplicateItemError = () => {
+    return Swal.fire({
+        title: 'Duplicate Item',
+        text: 'This item is already selected in another form. Please select a different item.',
+        icon: 'error',
+        confirmButtonText: 'Okay',
+        background: 'white',
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
+// ----- Stock Save Error ----- //
+export const showStockSaveError = (errorMessage?: string) => {
+    return Swal.fire({
+        title: 'Error',
+        text: errorMessage || 'Failed to save stock items. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'Okay',
+        background: 'white',
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
+// ----- Partial Success Warning ----- //
+export const showPartialSuccessWarning = () => {
+    return Swal.fire({
+        title: 'Partial Success',
+        text: 'Some items were saved successfully, but others failed. Please check the results.',
+        icon: 'warning',
+        confirmButtonText: 'Okay',
+        background: 'white',
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
 // ----- Edit Stock Confirmation ----- //
-export const showStockUpdateConfirmation = (itemName: string) => {
+export const showStockUpdateConfirmation = (item_name: string) => {
     return Swal.fire({
         title: 'Confirm Update',
-        html: `<p>Are you sure you want to update the stock details for <strong>${itemName}</strong>?</p>`,
+        html: `<p>Are you sure you want to update the stock details for <strong>${item_name}</strong>?</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Update',
@@ -116,10 +158,10 @@ export const showStockUpdatedSuccess = () => {
 };
 
 // ----- Delete Stock Confirmation ----- //
-export const showStockDeleteConfirmation = (itemName: string) => {
+export const showStockDeleteConfirmation = (item_name: string) => {
     return Swal.fire({
         title: 'Confirm Deletion',
-        html: `<p>Are you sure you want to delete <strong>${itemName}</strong>? You will not be able to undo this.</p>`,
+        html: `<p>Are you sure you want to delete <strong>${item_name}</strong>? You will not be able to undo this.</p>`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Delete',
@@ -133,10 +175,10 @@ export const showStockDeleteConfirmation = (itemName: string) => {
 };
 
 // ----- Delete Stock Success ----- //
-export const showStockDeletedSuccess = () => {
+export const showStockDeletedSuccess = (item_name: string) => {
     return Swal.fire({
         title: 'Deleted!',
-        text: 'An item has been deleted.',
+        html: `<p><strong>${item_name}</strong> has been deleted.</p>`,
         icon: 'success',
         background: 'white',
         timer: 2000,

@@ -72,6 +72,13 @@
     text-overflow: ellipsis;
 }
 
+.no-records {
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--primary-text-color);
+}
+
 /* .table-body tr:nth-child(even) {
     background-color: var(--table-row-color);
 } */
