@@ -87,6 +87,10 @@
     padding-left: 5px;
 }
 
+.table-body .table-status {
+    white-space: nowrap;
+}
+
 /* .table-body tr:nth-child(even) {
     background-color: var(--table-row-color);
 } */

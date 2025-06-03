@@ -65,6 +65,9 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 	// State for categories
 	const [categories, setCategories] = useState<Category[]>([]);
 
+	// Track which forms have pre-filled categories (should be disabled)
+	const [preFilledCategories, setPreFilledCategories] = useState<boolean[]>([false]);
+
 	// Fetch items from Supabase when component mounts
 	useEffect(() => {
 		async function loadItems() {
@@ -131,6 +134,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 
 			let categoryValue = "";
 			let reorderValue = 0;
+			let hasPrefillCategory = false;
 
 			// Check if item already exists in local database
 			try {
@@ -149,6 +153,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 					// Item exists in local database - use existing category and reorder level
 					categoryValue = existingItemData.item.category_name;
 					reorderValue = existingItemData.item.reorder_level;
+					hasPrefillCategory = true; // Mark this as pre-filled
 					console.log('Pre-filling with:', { categoryValue, reorderValue }); // Debug log
 				}
 			} catch (apiError) {
@@ -176,6 +181,11 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 						}
 						: form
 				)
+			);
+
+			// Update the pre-filled categories tracking
+			setPreFilledCategories(prev => 
+				prev.map((isPrefilled, i) => i === index ? hasPrefillCategory : isPrefilled)
 			);
 
 			// Clear errors for the name field
@@ -224,11 +234,13 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 	const handleAddAnotherStock = () => {
 		setStockForms((prev) => [...prev, initialFormState]);
 		setFormErrors((prev) => [...prev, {}]);
+		setPreFilledCategories((prev) => [...prev, false]); // New form has no pre-filled category
 	};
 
 	const handleRemoveStock = (index: number) => {
 		setStockForms((prev) => prev.filter((_, i) => i !== index));
 		setFormErrors((prev) => prev.filter((_, i) => i !== index));
+		setPreFilledCategories((prev) => prev.filter((_, i) => i !== index));
 	};
 
 	const validateForm = (): boolean => {
@@ -498,7 +510,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 									className={formErrors[index]?.category ? "invalid-input" : ""}
 									value={form.category}
 									onChange={(e) => handleFormChange(index, "category", e.target.value)}
-									disabled={isSaving || !!form.category}
+									disabled={isSaving || preFilledCategories[index]}
 								>
 									<option value="" disabled>Select category...</option>
 									{categories.map(category => (

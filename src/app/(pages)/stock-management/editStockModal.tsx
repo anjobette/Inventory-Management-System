@@ -9,7 +9,7 @@ import "@/styles/forms.css";
 
 interface EditStockModalProps {
 	item: {
-		id: number;
+		id: string;
 		item_id: string; // Added item_id to match API expectation
 		item_name: string;
 		current_stock: number;
@@ -100,16 +100,49 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 
 		if (!validateForm()) return;
 
+		// Debug logging
+		console.log('Form data item_id:', formData.item_id);
+		console.log('Original item:', item);
+
 		const result = await showStockUpdateConfirmation(formData.name);
 		if (result.isConfirmed) {
-			// Format data to match API expectations
-			const updateData = {
-				item_id: formData.item_id,
-				reorder_level: formData.reorder,
-				status: formatStatusForDatabase(formData.status) // Convert to enum format
-			};
-			onSave(updateData);
-			await showStockUpdatedSuccess();
+			try {
+				// Format data to match API expectations
+				const updateData = {
+					item_id: formData.item_id,
+					reorder_level: formData.reorder,
+					status: formatStatusForDatabase(formData.status)
+				};
+				
+				console.log('Sending update data:', updateData);
+
+				// Make the API call to update the item
+				const response = await fetch('/api/item', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(updateData),
+				});
+
+				const responseData = await response.json();
+				console.log('API response:', responseData);
+
+				if (response.ok && responseData.success) {
+					// Call onSave to update the parent component's state
+					onSave(responseData.item);
+					await showStockUpdatedSuccess();
+					onClose(); // Close the modal after successful update
+					window.location.reload();
+				} else {
+					console.error('Update failed:', responseData.error);
+					// You might want to show an error message to the user here
+					alert(`Update failed: ${responseData.error || 'Unknown error'}`);
+				}
+			} catch (error) {
+				console.error('Error updating item:', error);
+				alert('Failed to update item. Please try again.');
+			}
 		}
 	};
 

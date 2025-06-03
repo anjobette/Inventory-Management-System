@@ -99,7 +99,7 @@ export const showDuplicateItemError = () => {
 // ----- Stock Save Error ----- //
 export const showStockSaveError = (errorMessage?: string) => {
     return Swal.fire({
-        title: '',
+        title: 'Error',
         html: errorMessage || 'Failed to save stock items. Please try again.',
         icon: 'error',
         confirmButtonText: 'Okay',
@@ -168,6 +168,21 @@ export const showStockDeleteConfirmation = (item_name: string) => {
         cancelButtonText: 'Cancel',
         background: 'white',
         reverseButtons: true,
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
+// ----- Stock Save Error ----- //
+export const showDeleteError = (item_name: string, current_stock: number) => {
+    return Swal.fire({
+        title: 'Delete Action Denied',
+        html: `<p>Cannot delete <strong>${item_name}</strong>, it still has ${current_stock} items. 
+        Please reduce the stock to 0 before deleting this item.</p>`,
+        icon: 'error',
+        confirmButtonText: 'Okay',
+        background: 'white',
         customClass: {
             popup: 'swal-custom-popup'
         }

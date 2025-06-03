@@ -5,7 +5,7 @@ import ActionButtons from "@/components/actionButtons";
 import ModalManager from "@/components/modalManager";
 import FilterDropdown, { FilterSection } from "@/components/filterDropdown";
 import PaginationComponent from "@/components/pagination";
-import { showStockDeleteConfirmation, showStockDeletedSuccess, showStockSaveError } from "@/utils/sweetAlert";
+import { showStockDeleteConfirmation, showStockDeletedSuccess, showStockSaveError, showDeleteError } from "@/utils/sweetAlert";
 
 import AddStockModal from "./addStockModal";
 import ViewStockModal from "./viewStockModal";
@@ -358,7 +358,7 @@ export default function StocksManagement() {
             case "delete-stock":
                 // Check stock before allowing deletion
                 if (rowData && rowData.current_stock > 0) {
-                    showStockSaveError(`Cannot delete <strong>${rowData.item_name}</strong>, it still has ${rowData.current_stock} items. Please reduce the stock to 0 before deleting this item.`);
+                    showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
                     return;
                 }
                 handleDeleteStock(rowData);
@@ -415,7 +415,7 @@ export default function StocksManagement() {
                     window.location.reload();
                     console.log("Deleted row with id:", rowData.id);
                 } else {
-                        await showStockSaveError(data.message);
+                        await showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
                     }
             }
         } catch (error) {
@@ -510,7 +510,7 @@ export default function StocksManagement() {
                             <tbody className="table-body">
                                 {paginatedItems.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="no-records">
+                                        <td colSpan={7} className="no-records">
                                             {searchTerm || Object.keys(filterValues).some(key => 
                                                 filterValues[key] && 
                                                 (Array.isArray(filterValues[key]) ? filterValues[key].length > 0 : true)
@@ -530,7 +530,7 @@ export default function StocksManagement() {
                                             <td>{item.current_stock}</td>
                                             <td>{item.unit_measure}</td>
                                             <td>{item.category.category_name}</td>
-                                            <td>
+                                            <td className="table-status">
                                                 <span className={`chip ${getStatusClass(item.status)}`}>
                                                     {formatStatus(item.status)}
                                                 </span>
