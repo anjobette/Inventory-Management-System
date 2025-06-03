@@ -79,6 +79,14 @@
   color: var(--primary-text-color);
 }
 
+.filter-results {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--secondary-text-color);
+    margin-bottom: 12px;
+    padding-left: 5px;
+}
+
 /* .table-body tr:nth-child(even) {
     background-color: var(--table-row-color);
 } */

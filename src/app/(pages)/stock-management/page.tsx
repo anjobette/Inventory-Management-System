@@ -24,7 +24,12 @@ interface InventoryItem {
     current_stock: number;
     unit_measure: string;
     status: string;
-    category_id: string;
+    category_id: string; // This is the foreign key
+    category: {         // This is the relation object
+        category_id: string;
+        category_name: string;
+    };
+    date_updated: string;
     reorder_level: number;
     batches: {
         batch_id: string;
@@ -96,12 +101,12 @@ export default function StocksManagement() {
             defaultValue: { from: "", to: "" }
         },
         {
-            id: "categories",
+            id: "category",
             title: "Categories",
             type: "checkbox",
             options: [
-                { id: "consumables", label: "Consumables" },
-                { id: "machine-equipment", label: "Machine & Equipments" }
+                { id: "Consumable", label: "Consumables" },
+                { id: "Machine & Equipment", label: "Machine & Equipments" }
             ]
         },
         {
@@ -156,21 +161,31 @@ export default function StocksManagement() {
             filtered = filtered.filter(item => filterValues.status.includes(item.status));
         }
 
-        // Apply categories filter (if you have category mapping)
-        if (filterValues.categories && filterValues.categories.length > 0) {
-            // You might need to implement category mapping based on your category_id
-            // For now, this is a placeholder - adjust based on your actual category implementation
-            filtered = filtered.filter(item => {
-                // Map category_id to category names or implement your category logic here
-                return true; // Placeholder - implement based on your categories
-            });
+        if (filterValues.category && filterValues.category.length > 0) {
+            filtered = filtered.filter(item => filterValues.category.includes(item.category.category_name));
         }
-
-        // Apply date range filter (if you have date fields)
+        
         if (filterValues.dateRange && (filterValues.dateRange.from || filterValues.dateRange.to)) {
-            // Implement date filtering based on your date fields
-            // This might be based on batch expiration dates or other date fields
-            // For now, this is a placeholder
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.date_updated);
+                const fromDate = filterValues.dateRange.from ? new Date(filterValues.dateRange.from) : null;
+                const toDate = filterValues.dateRange.to ? new Date(filterValues.dateRange.to) : null;
+
+                // If both dates are provided
+                if (fromDate && toDate) {
+                    return itemDate >= fromDate && itemDate <= toDate;
+                }
+                // If only from date is provided
+                else if (fromDate) {
+                    return itemDate >= fromDate;
+                }
+                // If only to date is provided
+                else if (toDate) {
+                    return itemDate <= toDate;
+                }
+                
+                return true;
+            });
         }
 
         // Apply sorting
@@ -213,6 +228,31 @@ export default function StocksManagement() {
     const totalPages = Math.ceil(filteredAndSearchedItems.length / pageSize);
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedItems = filteredAndSearchedItems.slice(startIndex, startIndex + pageSize);
+
+    const getDateRangeDisplay = () => {
+        if (!filterValues.dateRange) return null;
+        
+        const { from, to } = filterValues.dateRange;
+        if (!from && !to) return null;
+        
+        const formatDate = (dateString: string) => {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        };
+        
+        if (from && to) {
+            return `Items filtered from ${formatDate(from)} to ${formatDate(to)}`;
+        } else if (from) {
+            return `Items filtered from ${formatDate(from)}`;
+        } else if (to) {
+            return `Items filtered up to ${formatDate(to)}`;
+        }
+        
+        return null;
+    };
 
     // Generate page numbers for pagination - improved version
     const getPageNumbers = () => {
@@ -316,6 +356,11 @@ export default function StocksManagement() {
                 />;
                 break;
             case "delete-stock":
+                // Check stock before allowing deletion
+                if (rowData && rowData.current_stock > 0) {
+                    showStockSaveError(`Cannot delete <strong>${rowData.item_name}</strong>, it still has ${rowData.current_stock} items. Please reduce the stock to 0 before deleting this item.`);
+                    return;
+                }
                 handleDeleteStock(rowData);
                 return;
             default:
@@ -441,6 +486,12 @@ export default function StocksManagement() {
                     </button>
                 </div>
 
+                {getDateRangeDisplay() && (
+                    <div className="filter-results">
+                        {getDateRangeDisplay()}
+                    </div>
+                )}
+
                 {/* Table */}
                 <div className="table-wrapper">
                     <div className="table-container">
@@ -450,6 +501,7 @@ export default function StocksManagement() {
                                     <th>Item Name</th>
                                     <th>Current Stock</th>
                                     <th>Unit Measure</th>
+                                    <th>Category</th>
                                     <th>Status</th>
                                     <th>Reorder Level</th>
                                     <th>Actions</th>
@@ -477,6 +529,7 @@ export default function StocksManagement() {
                                             <td>{item.item_name}</td>
                                             <td>{item.current_stock}</td>
                                             <td>{item.unit_measure}</td>
+                                            <td>{item.category.category_name}</td>
                                             <td>
                                                 <span className={`chip ${getStatusClass(item.status)}`}>
                                                     {formatStatus(item.status)}

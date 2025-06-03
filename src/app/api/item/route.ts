@@ -11,26 +11,38 @@ export async function GET() {
       },
       select: {
         item_id: true,
-        f_item_id: true,
+        // f_item_id: true,
         item_name: true,
         current_stock: true,
         unit_measure: true,
         status: true,
         category_id: true,
-        reorder_level: true,
-        batches: {
+        category: {
           select: {
-            batch_id: true,
-            usable_quantity: true,
-            defective_quantity: true,
-            missing_quantity: true,
-            expiration_date: true
-          }
-        }
-      }
-    });
+            category_id: true,
+            category_name: true,
+          },
+        },
+        reorder_level: true,
+        date_created: true,
+        date_updated: true,
+        batches: true
+      },
+      });
+        const batches = await prisma.batch.findMany({
+        where: { isdeleted: false },
+        select: {
+          batch_id: true,
+          f_item_id: true,
+          usable_quantity: true,
+          defective_quantity: true,
+          missing_quantity: true,
+          expiration_date: true,
+        },
+      });
+    // });
 
-    return NextResponse.json({ success: true, items });
+    return NextResponse.json({ success: true, items, batches });
   } catch (error: any) {
     console.error('Error fetching inventory items:', error);
     return NextResponse.json(
@@ -56,7 +68,7 @@ export async function POST(request: NextRequest) {
         // Check if the inventory item already exists
         console.log(`🔍 Checking if item exists: ${item.itemName}`);
         const existingItem = await prisma.inventoryItem.findFirst({
-          where: { item_name: item.itemName }
+          where: { item_name: item.itemName, isdeleted: false },
         });
 
         // Convert status string to enum value
@@ -86,6 +98,7 @@ export async function POST(request: NextRequest) {
               batches: {
                 create: {
                   batch_id,
+                  f_item_id: item.name,
                   usable_quantity: item.usable,
                   defective_quantity: item.defective,
                   missing_quantity: item.missing,
@@ -123,7 +136,7 @@ export async function POST(request: NextRequest) {
           const newItem = await prisma.inventoryItem.create({
             data: {
               item_id,
-              f_item_id: item.name,
+              // f_item_id: item.name,
               category_id: category.category_id,
               item_name: item.itemName,
               unit_measure: item.unit,
@@ -134,6 +147,7 @@ export async function POST(request: NextRequest) {
               batches: {
                 create: {
                   batch_id,
+                  f_item_id: item.name,
                   usable_quantity: item.usable,
                   defective_quantity: item.defective,
                   missing_quantity: item.missing,
@@ -220,3 +234,4 @@ export async function PATCH (req: NextRequest) {
       }
   }
 }
+

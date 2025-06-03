@@ -10,11 +10,17 @@ import "@/styles/forms.css";
 interface EditStockModalProps {
 	item: {
 		id: number;
-		name: string;
-		quantity: number;
-		unit: string;
+		item_id: string; // Added item_id to match API expectation
+		item_name: string;
+		current_stock: number;
+		unit_measure: string;
 		status: string;
-		reorder: number;
+		reorder_level: number;
+		category_id: string;
+		category: {
+			category_id: string;
+			category_name: string;
+		};
 		// Additional fields would be included in a real application
 	};
 	onSave: (updatedItem: any) => void;
@@ -22,14 +28,39 @@ interface EditStockModalProps {
 }
 
 export default function EditStockModal({ item, onSave, onClose }: EditStockModalProps) {
+	// Helper function to convert database status to form display value
+	const formatStatusForDisplay = (dbStatus: string) => {
+		const statusMap: Record<string, string> = {
+			'AVAILABLE': 'available',
+			'LOW_STOCK': 'low_stock',
+			'OUT_OF_STOCK': 'out_of_stock',
+			'UNDER_MAINTENANCE': 'under_maintenance',
+			'EXPIRED': 'expired'
+		};
+		return statusMap[dbStatus] || dbStatus.toLowerCase();
+	};
+
+	// Helper function to convert form display value to database format
+	const formatStatusForDatabase = (displayStatus: string) => {
+		const statusMap: Record<string, string> = {
+			'available': 'AVAILABLE',
+			'low_stock': 'LOW_STOCK',
+			'out_of_stock': 'OUT_OF_STOCK',
+			'under_maintenance': 'UNDER_MAINTENANCE',
+			'expired': 'EXPIRED'
+		};
+		return statusMap[displayStatus] || displayStatus.toUpperCase();
+	};
+
 	const [formData, setFormData] = useState({
 		id: item.id,
-		name: item.name,
-		quantity: item.quantity,
-		unit: item.unit,
-		reorder: item.reorder,
-		category: "", // Default value, would be populated from item in a real app
-		status: item.status,
+		item_id: item.item_id, // Added for API compatibility
+		name: item.item_name,
+		quantity: item.current_stock,
+		unit: item.unit_measure,
+		reorder: item.reorder_level,
+		category: item.category.category_name,
+		status: formatStatusForDisplay(item.status), // Convert from DB format to display format
 		expiration: "" // Default value, would be populated from item in a real app
 	});
 
@@ -58,7 +89,7 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 
 		// Validate reorder level
 		if (formData.reorder < 0) errors.reorder = "Reorder level must be 0 or more";
-		if (formData.reorder > formData.quantity) errors.reorder = "Reorder level cannot exceed total quantity";
+		if (formData.reorder >= formData.quantity) errors.reorder = "Reorder level must be lower than total quantity";
 
 		setFormErrors(errors);
 		return Object.keys(errors).length === 0;
@@ -71,7 +102,13 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 
 		const result = await showStockUpdateConfirmation(formData.name);
 		if (result.isConfirmed) {
-			onSave(formData);
+			// Format data to match API expectations
+			const updateData = {
+				item_id: formData.item_id,
+				reorder_level: formData.reorder,
+				status: formatStatusForDatabase(formData.status) // Convert to enum format
+			};
+			onSave(updateData);
 			await showStockUpdatedSuccess();
 		}
 	};
@@ -87,6 +124,9 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 			onClose();
 		}
 	};
+
+	// Check if status should be disabled based on category
+	const isStatusDisabled = formData.category.toLowerCase() === "consumable";
 
 	return (
 		<>
@@ -132,18 +172,11 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 						{/* Unit Measure */}
 						<div className="form-group">
 							<label>Unit Measure</label>
-							<select disabled
+							<input disabled
+								type="text"
 								value={formData.unit}
 								onChange={(e) => handleChange("unit", e.target.value)}
-							>
-								<option value="pcs">pcs (pieces)</option>
-								<option value="kg">kg (kilograms)</option>
-								<option value="l">L (liters)</option>
-								<option value="m">m (meters)</option>
-								<option value="box">box/es</option>
-								<option value="pack">pack/s</option>
-								<option value="roll">roll/s</option>
-							</select>
+							/>
 						</div>
 
 						{/* Reorder Level */}
@@ -152,7 +185,7 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 							<input
 								className={formErrors?.reorder ? "invalid-input" : ""}
 								type="number"
-								step="0.1"
+								step="1"
 								min="0"
 								value={formData.reorder}
 								onChange={(e) => handleChange("reorder", Number(e.target.value))}
@@ -165,38 +198,38 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 						{/* Category */}
 						<div className="form-group category">
 							<label>Category</label>
-							<select disabled
+							<input disabled
+								type="text"
 								value={formData.category}
 								onChange={(e) => handleChange("category", e.target.value)}
-							>
-								<option value="consumable">Consumable</option>
-								<option value="mach-equip">Machine/Equipment</option>
-							</select>
+							/>
 						</div>
 
 						{/* Status */}
 						<div className="form-group">
 							<label>Status</label>
 							<select
+								disabled={isStatusDisabled}
 								value={formData.status}
 								onChange={(e) => handleChange("status", e.target.value)}
 							>
 								<option value="available">Available</option>
-								<option value="maintenance">Under Maintenance</option>
+								<option value="under_maintenance">Under Maintenance</option>
 							</select>
+							{isStatusDisabled}
 						</div>
 					</div>
 
 					{/* Expiration Date */}
 					{/* {formData.category === "consumable" && ( */}
-					<div className="form-group expiration">
+					{/* <div className="form-group expiration">
 						<label>Expiration Date</label>
 						<input disabled
 							type="date"
 							value={formData.expiration}
 							onChange={(e) => handleChange("expiration", e.target.value)}
 						/>
-					</div>
+					</div> */}
 					{/* )} */}
 
 				</form>

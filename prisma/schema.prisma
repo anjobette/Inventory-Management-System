@@ -9,7 +9,7 @@ datasource db {
 
 model InventoryItem {
   item_id       String          @id @db.VarChar(10)
-  f_item_id     String          @db.VarChar(10)
+  // f_item_id     String          @db.VarChar(10)
   category_id   String
   item_name     String          @db.VarChar(100)
   unit_measure  String          @db.VarChar(20)
@@ -29,6 +29,7 @@ model InventoryItem {
 model Batch {
   batch_id           String        @id @db.VarChar(10)
   item_id            String
+  f_item_id          String          @db.VarChar(10)
   usable_quantity    Int           @default(0)
   defective_quantity Int           @default(0)
   missing_quantity   Int           @default(0)

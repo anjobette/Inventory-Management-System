@@ -4,7 +4,6 @@ CREATE TYPE "InventoryStatus" AS ENUM ('LOW_STOCK', 'AVAILABLE', 'OUT_OF_STOCK',
 -- CreateTable
 CREATE TABLE "inventory_items" (
     "item_id" VARCHAR(10) NOT NULL,
-    "f_item_id" VARCHAR(10) NOT NULL,
     "category_id" TEXT NOT NULL,
     "item_name" VARCHAR(100) NOT NULL,
     "unit_measure" VARCHAR(20) NOT NULL,
@@ -23,6 +22,7 @@ CREATE TABLE "inventory_items" (
 CREATE TABLE "batches" (
     "batch_id" VARCHAR(10) NOT NULL,
     "item_id" TEXT NOT NULL,
+    "f_item_id" VARCHAR(10) NOT NULL,
     "usable_quantity" INTEGER NOT NULL DEFAULT 0,
     "defective_quantity" INTEGER NOT NULL DEFAULT 0,
     "missing_quantity" INTEGER NOT NULL DEFAULT 0,

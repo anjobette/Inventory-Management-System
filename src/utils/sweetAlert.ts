@@ -99,8 +99,8 @@ export const showDuplicateItemError = () => {
 // ----- Stock Save Error ----- //
 export const showStockSaveError = (errorMessage?: string) => {
     return Swal.fire({
-        title: 'Error',
-        text: errorMessage || 'Failed to save stock items. Please try again.',
+        title: '',
+        html: errorMessage || 'Failed to save stock items. Please try again.',
         icon: 'error',
         confirmButtonText: 'Okay',
         background: 'white',
@@ -189,6 +189,43 @@ export const showStockDeletedSuccess = (item_name: string) => {
         }
     });
 };
+
+// ----- Remove Expired Confirmation ----- //
+export const showDeleteExpiredConfirmation = (batch_id: string) => {
+    return Swal.fire({
+        title: 'Remove Expired Item',
+        html: 
+            `<p>Are you sure you want to delete this expired batch? You will not be able to undo this.</p>
+            <span id="hidden-batch-id" style="display: none;">${batch_id}</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        background: 'white',
+        reverseButtons: true,
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
+// ----- Remove Expired Success ----- //
+export const showDeleteExpiredSuccess = (batch_id: string) => {
+    return Swal.fire({
+        title: 'Deleted!',
+        html: `<p>An expired item has been deleted.</p>
+                <span id="hidden-batch-id" style="display: none;">${batch_id}</span>`,
+        icon: 'success',
+        background: 'white',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        customClass: {
+            popup: 'swal-custom-popup'
+        }
+    });
+};
+
 
 
 //-------------------- REQUEST MANAGEMENT SPECIFIC -------------------//

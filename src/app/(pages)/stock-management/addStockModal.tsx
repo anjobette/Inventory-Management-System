@@ -110,52 +110,95 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 
 	// Handle item selection - populate unit and category from the selected item
 	const handleItemSelection = async (index: number, itemId: string) => {
-		try {
-			// Find the selected item in our already fetched items array
-			const selectedItem = items.find(item => item.f_item_id === itemId);
-			
-			if (selectedItem) {
-				// Check if this item is already selected in another form
-				const isDuplicate = stockForms.some((form, i) => 
-					i !== index && form.name === itemId
-				);
+	try {
+		// Find the selected item in our already fetched items array
+		const selectedItem = items.find(item => item.f_item_id === itemId);
+		
+		if (selectedItem) {
+			// Check if this item is already selected in another form
+			const isDuplicate = stockForms.some((form, i) => 
+				i !== index && form.name === itemId
+			);
 
-				if (isDuplicate) {
-					// Show SweetAlert for duplicate error
-					await showDuplicateItemError();
-					return;
-				}
-
-				// Update the form with data from the selected item
-				setStockForms(prev =>
-					prev.map((form, i) =>
-						i === index
-							? {
-								...form,
-								name: itemId,
-								itemName: getItemDisplayName(selectedItem),
-								unit: selectedItem.unit_measure || form.unit,
-								quantity: selectedItem.purchased_quantity || form.quantity,
-								// Set default values for quantities
-								usable: selectedItem.purchased_quantity || 0,
-								defective: 0,
-								missing: 0,
-							}
-							: form
-					)
-				);
-
-				// Clear errors for the name field
-				if (formErrors[index] && formErrors[index].name) {
-					const newErrors = [...formErrors];
-					delete newErrors[index].name;
-					setFormErrors(newErrors);
-				}
+			if (isDuplicate) {
+				// Show SweetAlert for duplicate error
+				await showDuplicateItemError();
+				return;
 			}
-		} catch (error) {
-			console.error("Error selecting item:", error);
+			const fullItemName = getItemDisplayName(selectedItem);
+			console.log('Selected item:', selectedItem); // Debug log
+			console.log('Item name for check:', selectedItem.item_name); // Debug log
+
+			let categoryValue = "";
+			let reorderValue = 0;
+
+			// Check if item already exists in local database
+			try {
+				const existingItemResponse = await fetch(`/api/stock?action=check-existing&itemName=${encodeURIComponent(fullItemName)}`);
+				
+				console.log('API Response status:', existingItemResponse.status); // Debug log
+				
+				if (!existingItemResponse.ok) {
+					throw new Error(`HTTP error! status: ${existingItemResponse.status}`);
+				}
+				
+				const existingItemData = await existingItemResponse.json();
+				console.log('Existing item data:', existingItemData); // Debug log
+
+				if (existingItemData.success && existingItemData.exists) {
+					// Item exists in local database - use existing category and reorder level
+					categoryValue = existingItemData.item.category_name;
+					reorderValue = existingItemData.item.reorder_level;
+					console.log('Pre-filling with:', { categoryValue, reorderValue }); // Debug log
+				}
+			} catch (apiError) {
+				console.error("Error checking existing item:", apiError);
+				// Don't fail the entire operation, just log the error
+			}
+
+			// Update the form with data from the selected item
+			setStockForms(prev =>
+				prev.map((form, i) =>
+					i === index
+						? {
+							...form,
+							name: itemId,
+							itemName: getItemDisplayName(selectedItem),
+							unit: selectedItem.unit_measure || form.unit,
+							quantity: selectedItem.purchased_quantity || form.quantity,
+							// Set default values for quantities
+							usable: selectedItem.purchased_quantity || 0,
+							defective: 0,
+							missing: 0,
+							// Pre-fill category and reorder if item exists in local DB
+							category: categoryValue,
+							reorder: reorderValue,
+						}
+						: form
+				)
+			);
+
+			// Clear errors for the name field
+			if (formErrors[index] && formErrors[index].name) {
+				const newErrors = [...formErrors];
+				delete newErrors[index].name;
+				// Also clear category error if we auto-filled it
+				if (categoryValue) {
+					delete newErrors[index].category;
+				}
+				// Clear reorder error if we auto-filled it
+				if (reorderValue > 0) {
+					delete newErrors[index].reorder;
+				}
+				setFormErrors(newErrors);
+			}
 		}
-	};
+	} catch (error) {
+		console.error("Error selecting item:", error);
+		// You might want to show an error message to the user here
+		setError("Failed to load item data. Please try again.");
+	}
+};
 
 	const handleFormChange = (index: number, field: string, value: any) => {
 		setStockForms((prev) =>
@@ -193,8 +236,8 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 			const errorObj: FormError = {};
 
 			if (!form.name) errorObj.name = "Item name is required";
-			if (form.reorder < 1) errorObj.reorder = "Reorder level must be more than 0";
-			if (form.reorder > form.quantity) errorObj.reorder = "Reorder level cannot exceed total quantity";
+			if (form.reorder < 0) errorObj.reorder = "Reorder level must be at least 0";
+			if (form.reorder >= form.quantity) errorObj.reorder = "Reorder level must be lower than total quantity";
 			if (!form.category) errorObj.category = "Item category is required";
 
 			const sum = form.usable + form.defective + form.missing;
@@ -455,7 +498,7 @@ export default function AddStockModal({ onSave, onClose }: AddStockModalProps) {
 									className={formErrors[index]?.category ? "invalid-input" : ""}
 									value={form.category}
 									onChange={(e) => handleFormChange(index, "category", e.target.value)}
-									disabled={isSaving}
+									disabled={isSaving || !!form.category}
 								>
 									<option value="" disabled>Select category...</option>
 									{categories.map(category => (

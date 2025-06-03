@@ -61,6 +61,7 @@ export async function fetchItemById(id: string): Promise<Item | null> {
   }
 }
 
+
 export async function fetchAvailableItems() {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -83,14 +84,14 @@ export async function fetchAvailableItems() {
     } 
     
     const inventoryData = await inventoryResponse.json();
-    const inventoryItems = inventoryData.items;
+    const inventoryItems = inventoryData.batches;
     
     // Extract f_item_ids already in inventory
     const existingItemIds = inventoryItems.map((item: any) => item.f_item_id);
     
     // Filter out items already in inventory
-    const availableItems = allItems.filter((item: Item) => 
-      !existingItemIds.includes(item.f_item_id)
+    const availableItems = allItems.filter((batch: Item) => 
+      !existingItemIds.includes(batch.f_item_id)
     );
     
     return availableItems;

@@ -182,6 +182,23 @@
     background-color: var(--table-row-hover-color);
 }
 
+/* remove expired button */
+.remove-btn-wrapper.expired {
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+}
+
+.remove-btn-wrapper.expired .remove-stock-btn{
+    padding: 0 3px;
+    background-color: transparent;
+    color: var(--error-color);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
 /* delete stock button */
 .modal-actions.delete .delete-btn {
     width: 120px;
