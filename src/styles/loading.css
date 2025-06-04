@@ -41,15 +41,15 @@
 
 
 /* ----- LOADING STYLINGS ----- */
-.loading-box {
+.loading-bus {
     width: 80px;
     height: 40px;
     margin-bottom: 15px;
     position: relative;
-    animation: driveForward 3s ease-in-out infinite;
+    animation: drive 3s ease-in-out infinite;
 }
 
-.loading-box::before {
+.loading-bus::before {
     content: '';
     position: absolute;
     width: 100%;
@@ -61,7 +61,7 @@
 }
 
 /* Bus windows */
-.loading-box::after {
+.loading-bus::after {
     content: '';
     position: absolute;
     top: 6px;
@@ -77,7 +77,7 @@
 }
 
 /* Bus wheels */
-.loading-box .wheel {
+.loading-bus .wheel {
     position: absolute;
     bottom: -8px;
     width: 15px;
@@ -85,59 +85,15 @@
     background-color: var(--foreground-color);
     border: 5px solid var(--primary-text-color);
     border-radius: 50%;
-    animation: spin 0.5s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
-.loading-box .wheel:first-child {
+.loading-bus .wheel:first-child {
     left: 8px;
 }
 
-.loading-box .wheel:last-child {
+.loading-bus .wheel:last-child {
     right: 8px;
-}
-
-/* Smoke effect */
-.smoke-container {
-    position: absolute;
-    top: -5px;
-    right: -15px;
-    width: 20px;
-    height: 15px;
-    overflow: visible;
-}
-
-.smoke {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background-color: rgba(128, 128, 128, 0.6);
-    border-radius: 50%;
-    animation: smokeFloat 2s ease-out infinite;
-}
-
-.smoke:nth-child(1) {
-    animation-delay: 0s;
-    left: 0px;
-}
-
-.smoke:nth-child(2) {
-    animation-delay: 0.3s;
-    left: 2px;
-}
-
-.smoke:nth-child(3) {
-    animation-delay: 0.6s;
-    left: 4px;
-}
-
-.smoke:nth-child(4) {
-    animation-delay: 0.9s;
-    left: 6px;
-}
-
-.smoke:nth-child(5) {
-    animation-delay: 1.2s;
-    left: 8px;
 }
 
 .loading-text {
@@ -163,15 +119,12 @@
 
 
 /* ----- ANIMATION ----- */
-@keyframes driveForward {
-    0% {
-        transform: translateX(-30px);
+@keyframes drive {
+    0%, 100% {
+        transform: translateX(-10px);
     }
     50% {
-        transform: translateX(0px);
-    }
-    100% {
-        transform: translateX(30px);
+        transform: translateX(10px);
     }
 }
 
@@ -186,20 +139,5 @@
     }
     20% {
         transform: translateY(-5px);
-    }
-}
-
-@keyframes smokeFloat {
-    0% {
-        transform: translateY(0) translateX(0) scale(1);
-        opacity: 0.6;
-    }
-    50% {
-        transform: translateY(-10px) translateX(-5px) scale(1.2);
-        opacity: 0.4;
-    }
-    100% {
-        transform: translateY(-20px) translateX(-10px) scale(1.5);
-        opacity: 0;
     }
 }
