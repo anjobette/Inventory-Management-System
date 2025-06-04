@@ -4,6 +4,10 @@ import { generateId } from '../../lib/idGenerator';
 
 export async function GET() {
   try {
+    // Get current date at midnight for expiration check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     // Fetch all items from the inventory that aren't deleted
     const items = await prisma.inventoryItem.findMany({
       where: {
@@ -11,9 +15,7 @@ export async function GET() {
       },
       select: {
         item_id: true,
-        // f_item_id: true,
         item_name: true,
-        current_stock: true,
         unit_measure: true,
         status: true,
         category_id: true,
@@ -26,23 +28,77 @@ export async function GET() {
         reorder_level: true,
         date_created: true,
         date_updated: true,
-        batches: true
+        batches: {
+          where: {
+            isdeleted: false
+          },
+          select: {
+            batch_id: true,
+            f_item_id: true,
+            usable_quantity: true,
+            defective_quantity: true,
+            missing_quantity: true,
+            expiration_date: true,
+            date_created: true,
+          }
+        }
       },
-      });
-        const batches = await prisma.batch.findMany({
-        where: { isdeleted: false },
-        select: {
-          batch_id: true,
-          f_item_id: true,
-          usable_quantity: true,
-          defective_quantity: true,
-          missing_quantity: true,
-          expiration_date: true,
-        },
-      });
-    // });
+    });
 
-    return NextResponse.json({ success: true, items, batches });
+    // Process each item to calculate current_stock and status
+    const processedItems = items.map(item => {
+      const { batches, ...itemData } = item;
+      
+      // Calculate current stock: sum of all usable quantities from non-deleted batches
+      const current_stock = batches.reduce((sum, batch) => sum + batch.usable_quantity, 0);
+      
+      // Check if any batch has expired (expiration date is today or earlier)
+      const hasExpiredBatch = batches.some(batch => {
+        if (!batch.expiration_date) return false;
+        const expirationDate = new Date(batch.expiration_date);
+        expirationDate.setHours(0, 0, 0, 0);
+        return expirationDate <= today;
+      });
+      
+      // Determine status based on business logic
+      let status: string;
+      if (hasExpiredBatch) {
+        status = 'EXPIRED';
+      } else if (current_stock === 0) {
+        status = 'OUT_OF_STOCK';
+      } else if (current_stock <= item.reorder_level) {
+        status = 'LOW_STOCK';
+      } else {
+        status = item.status;
+      }
+      
+      return {
+        ...itemData,
+        current_stock,
+        status,
+        batches
+      };
+    });
+
+    // Also return all batches separately if needed
+    const batches = await prisma.batch.findMany({
+      where: { isdeleted: false },
+      select: {
+        batch_id: true,
+        f_item_id: true,
+        usable_quantity: true,
+        defective_quantity: true,
+        missing_quantity: true,
+        expiration_date: true,
+        date_created: true,
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      items: processedItems, 
+      batches 
+    });
   } catch (error: any) {
     console.error('Error fetching inventory items:', error);
     return NextResponse.json(
@@ -88,10 +144,11 @@ export async function POST(request: NextRequest) {
         if (existingItem) {
           console.log(`🔄 Updating existing item: ${existingItem.item_id}`);
           // Update existing inventory item
+
           const updatedItem = await prisma.inventoryItem.update({
             where: { item_id: existingItem.item_id, isdeleted: false },
             data: {
-              current_stock: existingItem.current_stock + item.usable,
+              current_stock: item.current_stock,
               reorder_level: item.reorder,
               status: inventoryStatus,
               date_updated: new Date(),
@@ -103,7 +160,8 @@ export async function POST(request: NextRequest) {
                   defective_quantity: item.defective,
                   missing_quantity: item.missing,
                   expiration_date: item.expiration ? new Date(item.expiration) : null,
-                  created_by: 1
+                  created_by: "USR-00001",
+                  date_created: new Date(),
                 }
               }
             }
@@ -140,10 +198,10 @@ export async function POST(request: NextRequest) {
               category_id: category.category_id,
               item_name: item.itemName,
               unit_measure: item.unit,
-              current_stock: item.usable,
               reorder_level: item.reorder,
               status: inventoryStatus,
-              created_by: 1,
+              created_by: "USR-00001",
+              date_created: new Date(),
               batches: {
                 create: {
                   batch_id,
@@ -152,7 +210,8 @@ export async function POST(request: NextRequest) {
                   defective_quantity: item.defective,
                   missing_quantity: item.missing,
                   expiration_date: item.expiration ? new Date(item.expiration) : null,
-                  created_by: 1
+                  created_by: "USR-00001",
+                  date_created: new Date(),
                 }
               }
             }

@@ -13,7 +13,7 @@ CREATE TABLE "inventory_items" (
     "date_created" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_updated" TIMESTAMP(3) NOT NULL,
     "isdeleted" BOOLEAN NOT NULL DEFAULT false,
-    "created_by" INTEGER NOT NULL,
+    "created_by" TEXT NOT NULL,
 
     CONSTRAINT "inventory_items_pkey" PRIMARY KEY ("item_id")
 );
@@ -28,7 +28,7 @@ CREATE TABLE "batches" (
     "missing_quantity" INTEGER NOT NULL DEFAULT 0,
     "expiration_date" TIMESTAMP(3),
     "date_created" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "created_by" INTEGER NOT NULL,
+    "created_by" TEXT NOT NULL,
     "isdeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "batches_pkey" PRIMARY KEY ("batch_id")
