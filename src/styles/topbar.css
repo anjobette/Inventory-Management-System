@@ -36,6 +36,6 @@
     bottom: 0;
     height: 4px;
     border-radius: 4px;
-    background-color: #9F0F19;
+    background-color: var(--primary-color);
     transition: all 0.5s ease-in-out;
 }

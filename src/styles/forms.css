@@ -1,7 +1,17 @@
 /* ----- MODAL FORMS STYLING: ADD AND EDIT ----- */
 .modal-content.add .add-stock-form,
 .modal-content.edit .edit-stock-form,
-.modal-content.view .view-stock-form {
+.modal-content.view .view-stock-form,
+.modal-content.view-expired .view-stock-form,
+.modal-content.add .add-request-form,
+.modal-content.edit .edit-request-form,
+.modal-content.view .view-request-form,
+.modal-content.add .add-order-form,
+.modal-content.edit .edit-order-form,
+.modal-content.view .view-order-form,
+.modal-content.add .add-bus-form,
+.modal-content.edit .edit-bus-form,
+.modal-content.view .view-bus-form {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -16,6 +26,13 @@
     width: 100%;
 }
 
+.form-column {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .form-row {
     display: flex;
     gap: 16px;
@@ -28,6 +45,7 @@
 }
 
 .form-group input,
+.form-group textarea,
 .form-group select {
     margin-top: 5px;
     background-color: var(--foreground-color);
@@ -40,6 +58,20 @@
 
 .form-group input {
     padding: 6px 12px;
+}
+
+.form-group textarea {
+    padding: 6px 12px;
+    width: 500px;
+    height: 80px;
+    resize: none;
+}
+
+.form-group textarea.order {
+    padding: 6px 12px;
+    width: 300px;
+    height: 100%;
+    resize: none;
 }
 
 .form-group input[type='number'] {
@@ -61,6 +93,7 @@
 
 /* disabled styles */
 .form-group input:disabled,
+.form-group textarea:disabled,
 .form-group select:disabled {
     cursor: not-allowed;
 }
@@ -70,21 +103,21 @@
     padding: 6px 12px;
 }
 
-.form-group input:disabled:hover {
-    border-color: var(--foreground-color);
-}
-
-/* hover and focus styles */
+.form-group input:disabled:hover,
+.form-group textarea:disabled:hover,
 .form-group select:disabled:hover {
     border-color: var(--foreground-color);
 }
 
+/* hover and focus styles */
 .form-group input:hover,
+.form-group textarea:hover,
 .form-group select:hover {
     border-color: var(--border-color);
 }
 
 .form-group input:focus,
+.form-group textarea:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--primary-text-color);
@@ -93,18 +126,33 @@
 
 /* ----- MODAL FORMS STYLING: VIEW ----- */
 .modal-content.view {
+    min-width: 550px;
     display: flex;
     justify-content: space-between;
     gap: 15px;
-    margin: 10px 0;
+    margin: 15px 0;
 }
 
-.view-stock-form .form-group {
-    width: 150px;
+.modal-content.view-expired {
+    background-color: var(--error-chip-bg-color);
+    min-width: 550px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.view-stock-form .form-group,
+.view-request-form .form-group,
+.view-order-form .form-group,
+.view-bus-form .form-group {
     margin-bottom: 5px;
 }
 
-.view-stock-form .form-group p {
+.view-stock-form .form-group p,
+.view-request-form .form-group p,
+.view-order-form .form-group p,
+.view-bus-form .form-group p {
     margin-top: 5px;
     padding: 6px 12px;
     background-color: var(--foreground-color);
@@ -147,12 +195,20 @@
 
 /* ----- INPUT VALIDATION STYLINGS ----- */
 .form-group input.invalid-input,
+.form-group textarea.invalid-input,
 .form-group select.invalid-input {
     border: 1px solid var(--error-color);
     outline: none;
 }
 
-.add-stock-form .add-error-message {
+.add-stock-form .add-error-message,
+.edit-stock-form .edit-error-message,
+.add-request-form .add-error-message,
+.edit-request-form .edit-error-message,
+.add-order-form .add-error-message,
+.edit-order-form .edit-error-message,
+.add-bus-form .add-error-message,
+.edit-bus-form .edit-error-message {
     margin: 5px;
     font-size: 12px;
     color: var(--error-color);
@@ -161,10 +217,4 @@
 .add-stock-form .add-error-message.quantity {
     margin-top: -5px;
     margin-bottom: 5px;
-}
-
-.edit-stock-form .edit-error-message {
-    margin: 5px;
-    font-size: 12px;
-    color: var(--error-color);
 }

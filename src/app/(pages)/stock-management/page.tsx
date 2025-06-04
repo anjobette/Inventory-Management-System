@@ -1,82 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
-import MoreMenu from "@/components/moreMenu";
+import React, { useState, useEffect, useMemo } from "react";
+import ActionButtons from "@/components/actionButtons";
 import ModalManager from "@/components/modalManager";
-import Snackbar from "@/components/snackbar";
 import FilterDropdown, { FilterSection } from "@/components/filterDropdown";
+import PaginationComponent from "@/components/pagination";
+import Loading from "@/components/loading";
+import { showStockDeleteConfirmation, showStockDeletedSuccess, showStockSaveError, showDeleteError } from "@/utils/sweetAlert";
 
 import AddStockModal from "./addStockModal";
 import ViewStockModal from "./viewStockModal";
 import EditStockModal from "./editStockModal";
-import DeleteStockModal from "./deleteStockModal";
 import { StockForm } from "./addStockModal";
 
 import "@/styles/filters.css"
 import "@/styles/tables.css"
 import "@/styles/chips.css"
-import "@/styles/pagination.css"
-import "@/styles/snackbar.css"
+import "@/styles/loading.css"
 
-const hardcodedData = [
-    {
-        id: 1,
-        name: "Example Item A",
-        quantity: 50,
-        unit: "kg",
-        status: "available",
-        reorder: 10,
-    },
-    {
-        id: 2,
-        name: "Example Item B",
-        quantity: 0,
-        unit: "pcs",
-        status: "out-of-stock",
-        reorder: 5,
-    },
-    {
-        id: 3,
-        name: "Example Item C",
-        quantity: 20,
-        unit: "pcs",
-        status: "low-stock",
-        reorder: 8,
-    },
-    {
-        id: 4,
-        name: "Example Item D",
-        quantity: 20,
-        unit: "pcs",
-        status: "maintenance",
-        reorder: 8,
-    },
-    {
-        id: 5,
-        name: "Example Item E",
-        quantity: 16,
-        unit: "pcs",
-        status: "expired",
-        reorder: 3,
-    },
-];
+// Type definitions based on your Prisma schema
+interface InventoryItem {
+    item_id: string;
+    f_item_id: string;
+    item_name: string;
+    current_stock: number;
+    unit_measure: string;
+    status: string;
+    category_id: string; // This is the foreign key
+    category: {         // This is the relation object
+        category_id: string;
+        category_name: string;
+    };
+    date_updated: string;
+    reorder_level: number;
+    batches: {
+        batch_id: string;
+        usable_quantity: number;
+        defective_quantity: number;
+        missing_quantity: number;
+        expiration_date: string | null;
+    }[];
+}
+
+interface ApiResponse {
+    success: boolean;
+    items: InventoryItem[];
+    error?: string;
+}
 
 export default function StocksManagement() {
+    // Data state
+    const [stockItems, setStockItems] = useState<InventoryItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Search and filter state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+
+    // Pagination state - Updated to match old file's approach
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10); // default number of rows per page
+
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeRow, setActiveRow] = useState<any>(null);
     const [modalContent, setModalContent] = useState<React.ReactNode>(null);
 
-    // for snackbar
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarType, setSnackbarType] = useState<"success" | "error" | "info" | "warning">("info");
+    // Fetch data from API
+    useEffect(() => {
+        fetchStockItems();
+    }, []);
 
-    // For filtering
-    const [filteredData, setFilteredData] = useState(hardcodedData);
+    const fetchStockItems = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/item');
+            const data: ApiResponse = await response.json();
 
-    // Filter sections
+            if (data.success) {
+                setStockItems(data.items);
+                setError(null);
+            } else {
+                setError(data.error || 'Failed to fetch stock items');
+            }
+        } catch (err) {
+            const errorMessage = 'Error fetching stock items';
+            setError(errorMessage);
+            console.error('Error fetching stock items:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Filter sections for the filter dropdown - Enhanced with proper categories
     const filterSections: FilterSection[] = [
         {
             id: "dateRange",
@@ -85,12 +103,14 @@ export default function StocksManagement() {
             defaultValue: { from: "", to: "" }
         },
         {
-            id: "categories",
+            id: "category",
             title: "Categories",
             type: "checkbox",
             options: [
-                { id: "consumables", label: "Consumables" },
-                { id: "machine-equipment", label: "Machine & Equipments" }
+                { id: "Consumable", label: "Consumables" },
+                { id: "Tool", label: "Tools" },
+                { id: "Machine", label: "Machines" },
+                { id: "Equipment", label: "Equipments" }
             ]
         },
         {
@@ -98,11 +118,11 @@ export default function StocksManagement() {
             title: "Status",
             type: "checkbox",
             options: [
-                { id: "available", label: "Available" },
-                { id: "out-of-stock", label: "Out of Stock" },
-                { id: "maintenance", label: "Under Maintenance" },
-                { id: "low-stock", label: "Low Stock" },
-                { id: "expired", label: "Expired" }
+                { id: "AVAILABLE", label: "Available" },
+                { id: "OUT_OF_STOCK", label: "Out of Stock" },
+                { id: "UNDER_MAINTENANCE", label: "Under Maintenance" },
+                { id: "LOW_STOCK", label: "Low Stock" },
+                { id: "EXPIRED", label: "Expired" }
             ]
         },
         {
@@ -110,10 +130,11 @@ export default function StocksManagement() {
             title: "Sort By",
             type: "radio",
             options: [
-                { id: "name", label: "Item Name" },
-                { id: "quantity", label: "Item Quantity" }
+                { id: "item_name", label: "Item Name" },
+                { id: "current_stock", label: "Current Stock" },
+                { id: "reorder_level", label: "Reorder Level" }
             ],
-            defaultValue: "name"
+            defaultValue: "item_name"
         },
         {
             id: "order",
@@ -127,52 +148,189 @@ export default function StocksManagement() {
         }
     ];
 
-    // Handle filter application
-    const handleApplyFilters = (filterValues: Record<string, any>) => {
-        console.log("Applied filters:", filterValues);
+    // Enhanced filter and search logic
+    const filteredAndSearchedItems = useMemo(() => {
+        let filtered = [...stockItems];
 
-        // In a real application, you would filter your data based on these values
-        // For now, we'll just log them and keep the original data
+        // Apply search filter
+        if (searchTerm.trim()) {
+            filtered = filtered.filter(item =>
+                item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.unit_measure.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
 
-        // Example implementation for filtering and sorting:
-        let newData = [...hardcodedData];
-
-        // Filter by status if selected
+        // Apply status filter
         if (filterValues.status && filterValues.status.length > 0) {
-            newData = newData.filter(item => filterValues.status.includes(item.status));
+            filtered = filtered.filter(item => filterValues.status.includes(item.status));
         }
 
-        // Sort by name or quantity
-        if (filterValues.sortBy === "name") {
-            newData.sort((a, b) => {
-                const sortOrder = filterValues.order === "asc" ? 1 : -1;
-                return a.name.localeCompare(b.name) * sortOrder;
-            });
-        } else if (filterValues.sortBy === "quantity") {
-            newData.sort((a, b) => {
-                const sortOrder = filterValues.order === "asc" ? 1 : -1;
-                return (a.quantity - b.quantity) * sortOrder;
+        if (filterValues.category && filterValues.category.length > 0) {
+            filtered = filtered.filter(item => filterValues.category.includes(item.category.category_name));
+        }
+
+        if (filterValues.dateRange && (filterValues.dateRange.from || filterValues.dateRange.to)) {
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.date_updated);
+                const fromDate = filterValues.dateRange.from ? new Date(filterValues.dateRange.from) : null;
+                const toDate = filterValues.dateRange.to ? new Date(filterValues.dateRange.to) : null;
+
+                // If both dates are provided
+                if (fromDate && toDate) {
+                    return itemDate >= fromDate && itemDate <= toDate;
+                }
+                // If only from date is provided
+                else if (fromDate) {
+                    return itemDate >= fromDate;
+                }
+                // If only to date is provided
+                else if (toDate) {
+                    return itemDate <= toDate;
+                }
+
+                return true;
             });
         }
 
-        setFilteredData(newData);
+        // Apply sorting
+        const sortBy = filterValues.sortBy || "item_name";
+        const order = filterValues.order || "asc";
+
+        filtered.sort((a, b) => {
+            let aValue, bValue;
+
+            switch (sortBy) {
+                case "item_name":
+                    aValue = a.item_name.toLowerCase();
+                    bValue = b.item_name.toLowerCase();
+                    break;
+                case "current_stock":
+                    aValue = a.current_stock;
+                    bValue = b.current_stock;
+                    break;
+                case "reorder_level":
+                    aValue = a.reorder_level;
+                    bValue = b.reorder_level;
+                    break;
+                default:
+                    aValue = a.item_name.toLowerCase();
+                    bValue = b.item_name.toLowerCase();
+            }
+
+            if (typeof aValue === "string") {
+                const comparison = aValue.localeCompare(bValue);
+                return order === "asc" ? comparison : -comparison;
+            } else {
+                const comparison = aValue - bValue;
+                return order === "asc" ? comparison : -comparison;
+            }
+        });
+
+        return filtered;
+    }, [stockItems, searchTerm, filterValues]);
+
+    const totalPages = Math.ceil(filteredAndSearchedItems.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedItems = filteredAndSearchedItems.slice(startIndex, startIndex + pageSize);
+
+    const getDateRangeDisplay = () => {
+        if (!filterValues.dateRange) return null;
+
+        const { from, to } = filterValues.dateRange;
+        if (!from && !to) return null;
+
+        const formatDate = (dateString: string) => {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        };
+
+        if (from && to) {
+            return `Items filtered from ${formatDate(from)} to ${formatDate(to)}`;
+        } else if (from) {
+            return `Items filtered from ${formatDate(from)}`;
+        } else if (to) {
+            return `Items filtered up to ${formatDate(to)}`;
+        }
+
+        return null;
     };
 
-    // for items status formatting
+    // Generate page numbers for pagination - improved version
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        if (endPage - startPage < maxVisiblePages - 1) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
+
+    // Handle filter application - enhanced from old file
+    const handleApplyFilters = (newFilterValues: Record<string, any>) => {
+        console.log("Applied filters:", newFilterValues);
+        setFilterValues(newFilterValues);
+        setCurrentPage(1); // Reset to first page when filters change
+    };
+
+    // Handle search input change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    // Handle pagination - updated to support page size changes like old file
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1); // Reset to first page when changing page size
+    };
+
+    // Status formatting function
     const formatStatus = (status: string) => {
         switch (status) {
-            case "available":
+            case "AVAILABLE":
                 return "Available";
-            case "out-of-stock":
+            case "OUT_OF_STOCK":
                 return "Out of Stock";
-            case "low-stock":
+            case "LOW_STOCK":
                 return "Low Stock";
-            case "maintenance":
+            case "UNDER_MAINTENANCE":
                 return "Under Maintenance";
-            case "expired":
+            case "EXPIRED":
                 return "Expired";
             default:
                 return status;
+        }
+    };
+
+    // Get CSS class for status
+    const getStatusClass = (status: string) => {
+        switch (status) {
+            case "AVAILABLE":
+                return "available";
+            case "OUT_OF_STOCK":
+                return "out-of-stock";
+            case "LOW_STOCK":
+                return "low-stock";
+            case "UNDER_MAINTENANCE":
+                return "maintenance";
+            case "EXPIRED":
+                return "expired";
+            default:
+                return status.toLowerCase().replace(/_/g, '-');
         }
     };
 
@@ -202,12 +360,13 @@ export default function StocksManagement() {
                 />;
                 break;
             case "delete-stock":
-                content = <DeleteStockModal
-                    item={rowData}
-                    onConfirm={handleDeleteConfirm}
-                    onCancel={closeModal}
-                />;
-                break;
+                // Check stock before allowing deletion
+                if (rowData && rowData.current_stock > 0) {
+                    showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
+                    return;
+                }
+                handleDeleteStock(rowData);
+                return;
             default:
                 content = null;
         }
@@ -223,25 +382,11 @@ export default function StocksManagement() {
         setActiveRow(null);
     };
 
-    // snackbar
-    const showSnackbar = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
-        setSnackbarMessage(message);
-        setSnackbarType(type);
-        setSnackbarVisible(true);
-    };
-
     // Handle add stocks
     const handleAddStock = (stockForms: StockForm[]) => {
         console.log("Saving forms:", stockForms);
         // Logic to add multiple stock items to the data
         // In a real app, this would likely be an API call
-
-        const itemCount = stockForms.length;
-        const message = itemCount === 1
-            ? "Stock item added successfully!"
-            : `${itemCount} stock items added successfully!`;
-
-        showSnackbar(message, "success");
         closeModal();
     };
 
@@ -253,26 +398,77 @@ export default function StocksManagement() {
         closeModal();
     };
 
-    // Hadle delete stocks
-    const handleDeleteConfirm = () => {
-        console.log("Deleted row with id:", activeRow?.id);
-        // Logic to delete the item from the data
-        // In a real app, this would likely be an API call
-        closeModal();
+    // Handle delete stocks
+    const handleDeleteStock = async (rowData: any) => {
+        try {
+            const result = await showStockDeleteConfirmation(rowData.name || rowData.item_name);
+
+            if (result.isConfirmed) {
+                // Call the soft delete API
+                const response = await fetch(`/api/item`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ item_id: rowData.item_id }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await showStockDeletedSuccess(rowData.name || rowData.item_name);
+                    window.location.reload();
+                    console.log("Deleted row with id:", rowData.id);
+                } else {
+                    await showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting stock:', error);
+            await showStockSaveError('An unexpected error occurred');
+        }
     };
+
+    if (loading) {
+        return (
+            <div className="card">
+                <h1 className="title">Stock Management</h1>
+                <Loading />
+            </div>
+        );
+    }
+
+    if (error && stockItems.length === 0) {
+        return (
+            <div className="card">
+                <h1 className="title">Stock Management</h1>
+                <div className="fetch-container">
+                    <div className="fetch-error">
+                        <i className="ri-error-warning-line" />
+                        {error}
+                    </div>
+                    <button className="retry-btn" onClick={fetchStockItems}>
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="card">
             <h1 className="title">Stock Management</h1>
 
-            {/* Search Engine and Filters */}
+            {/* Search Engine and Status Filters */}
             <div className="elements">
                 <div className="entries">
                     <div className="search">
-                        <input type="text" placeholder="Search" />
-                        <button>
-                            <i className="ri-search-line"></i>
-                        </button>
+                        <i className="ri-search-line" />
+                        <input
+                            type="text"
+                            placeholder="Search item name or unit measure"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                        />
                     </div>
 
                     {/* Filter Button with Dropdown */}
@@ -294,6 +490,12 @@ export default function StocksManagement() {
                     </button>
                 </div>
 
+                {getDateRangeDisplay() && (
+                    <div className="filter-results">
+                        {getDateRangeDisplay()}
+                    </div>
+                )}
+
                 {/* Table */}
                 <div className="table-wrapper">
                     <div className="table-container">
@@ -303,54 +505,64 @@ export default function StocksManagement() {
                                     <th>Item Name</th>
                                     <th>Current Stock</th>
                                     <th>Unit Measure</th>
+                                    <th>Category</th>
                                     <th>Status</th>
                                     <th>Reorder Level</th>
-                                    <th></th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="table-body">
-                                {filteredData.map(item => (
-                                    <tr
-                                        key={item.id}
-                                        className={selectedIds.includes(item.id) ? "selected" : ""}
-                                    >
-                                        <td>{item.name}</td>
-                                        <td>{item.quantity}</td>
-                                        <td>{item.unit}</td>
-                                        <td>
-                                            <span className={`chip ${item.status}`}>
-                                                {formatStatus(item.status)}
-                                            </span>
-                                        </td>
-                                        <td>{item.reorder}</td>
-                                        <td>
-                                            <MoreMenu
-                                                onView={() => openModal("view-stock", item)}
-                                                onEdit={() => openModal("edit-stock", item)}
-                                                onDelete={() => openModal("delete-stock", item)}
-                                            />
+                                {paginatedItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="no-records">
+                                            {searchTerm || Object.keys(filterValues).some(key =>
+                                                filterValues[key] &&
+                                                (Array.isArray(filterValues[key]) ? filterValues[key].length > 0 : true)
+                                            )
+                                                ? 'No items matched'
+                                                : 'No stock items available'
+                                            }
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    paginatedItems.map(item => (
+                                        <tr
+                                            key={item.item_id}
+                                            className={selectedIds.includes(parseInt(item.item_id)) ? "selected" : ""}
+                                        >
+                                            <td>{item.item_name}</td>
+                                            <td>{item.current_stock}</td>
+                                            <td>{item.unit_measure}</td>
+                                            <td>{item.category.category_name}</td>
+                                            <td className="table-status">
+                                                <span className={`chip ${getStatusClass(item.status)}`}>
+                                                    {formatStatus(item.status)}
+                                                </span>
+                                            </td>
+                                            <td>{item.reorder_level}</td>
+                                            <td>
+                                                <ActionButtons
+                                                    onView={() => openModal("view-stock", item)}
+                                                    onEdit={() => openModal("edit-stock", item)}
+                                                    onDelete={() => openModal("delete-stock", item)}
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 {/* Pagination */}
-                <div className="pagination">
-                    <button className="page-btn">
-                        <i className="ri-arrow-left-s-line"></i>
-                    </button>
-                    <button className="page-btn active">1</button>
-                    <button className="page-btn">2</button>
-                    <button className="page-btn">3</button>
-                    <button className="page-btn">4</button>
-                    <button className="page-btn">5</button>
-                    <button className="page-btn">
-                        <i className="ri-arrow-right-s-line"></i>
-                    </button>
-                </div>
+                <PaginationComponent
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                />
             </div>
 
             {/* Dynamic Modal Manager */}
@@ -358,14 +570,6 @@ export default function StocksManagement() {
                 isOpen={isModalOpen}
                 onClose={closeModal}
                 modalContent={modalContent}
-            />
-
-            {/* Snackbar */}
-            <Snackbar
-                message={snackbarMessage}
-                isVisible={snackbarVisible}
-                onClose={() => setSnackbarVisible(false)}
-                type={snackbarType}
             />
 
         </div>

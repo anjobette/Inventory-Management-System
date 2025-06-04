@@ -26,13 +26,16 @@
 
   /* Table Colors */
   --border-color: #B3B3B3;
-  --table-header-color: #ECECEC;
+  --table-header-color: #D8D8D8;
+  --table-row-color: #ECECEC;
+  --table-hover-color: #D6E4FF;
 
   /* Chip Colors */
   --success-chip-bg-color: #D1F7D1;
   --error-chip-bg-color: #FFDDDD;
   --info-chip-bg-color: #D6E4FF;
   --warning-chip-bg-color: #FFF5C2;
+  --expired-chip-bg-color: #D9D9D9;
   --success-chip-text-color: #23915F;
   --error-chip-text-color: #A50000;
   --info-chip-text-color: #0050B3;
@@ -44,7 +47,8 @@
   --success-hover-color: #12B75C;
   --error-hover-color: #DE3939;
   --info-hover-color: #267BDB;
-  --table-header-hover-color: #DDDDDD;
+  --warning-hover-color: #fcc42a;
+  --table-row-hover-color: #DDDDDD;
 
   /* Shadow */
   --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -56,7 +60,7 @@ body {
 }
 
 /* TEMPORARY LANGGGGG */
-.login-wrapper {
+/* .login-wrapper {
   display: flex;
   height: 100vh;
   width: 100%;
@@ -80,6 +84,4 @@ body {
 
 .login-btn:hover {
   background: var(--primary-hover-color);
-}
-
-
+} */

@@ -7,7 +7,7 @@ export interface FilterOption {
 }
 
 // Types of filter fields we support
-export type FilterFieldType = 'dateRange' | 'checkbox' | 'radio' | 'select' | 'text';
+export type FilterFieldType = 'dateRange' | 'checkbox' | 'radio';
 
 // Definition for a single filter section
 export interface FilterSection {
@@ -55,12 +55,6 @@ export default function FilterDropdown({
                         defaults[section.id] = [];
                         break;
                     case 'radio':
-                    case 'select':
-                        defaults[section.id] = section.options && section.options.length > 0 ? section.options[0].id : '';
-                        break;
-                    case 'text':
-                        defaults[section.id] = '';
-                        break;
                 }
             }
         });
@@ -116,22 +110,6 @@ export default function FilterDropdown({
 
     // Handle radio selection (single selection)
     const handleRadioChange = (sectionId: string, value: string) => {
-        setFilterValues({
-            ...filterValues,
-            [sectionId]: value
-        });
-    };
-
-    // Handle text input changes
-    const handleTextChange = (sectionId: string, value: string) => {
-        setFilterValues({
-            ...filterValues,
-            [sectionId]: value
-        });
-    };
-
-    // Handle select changes
-    const handleSelectChange = (sectionId: string, value: string) => {
         setFilterValues({
             ...filterValues,
             [sectionId]: value
@@ -212,36 +190,6 @@ export default function FilterDropdown({
                     </div>
                 );
 
-            case 'select':
-                return (
-                    <div className="select-field">
-                        <select
-                            value={filterValues[section.id] || ''}
-                            onChange={(e) => handleSelectChange(section.id, e.target.value)}
-                            className="filter-select"
-                        >
-                            {section.options?.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                );
-
-            case 'text':
-                return (
-                    <div className="text-field">
-                        <input
-                            type="text"
-                            value={filterValues[section.id] || ''}
-                            onChange={(e) => handleTextChange(section.id, e.target.value)}
-                            placeholder={section.placeholder || ""}
-                            className="filter-text-input"
-                        />
-                    </div>
-                );
-
             default:
                 return null;
         }
@@ -250,7 +198,7 @@ export default function FilterDropdown({
     return (
         <div className={`filter ${className}`}>
             <button className="filter-btn" onClick={toggleDropdown}>
-                <i className="ri-equalizer-line" /> Filter
+                <i className="ri-equalizer-line" /> Filters
             </button>
 
             {isOpen && (

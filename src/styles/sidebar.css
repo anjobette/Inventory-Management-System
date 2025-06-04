@@ -13,7 +13,6 @@
 .sidebar {
     position: relative;
     width: calc(100% * 8 / 34);
-    /* min-width: calc(100% * 8 / 34); */
     background-color: var(--foreground-color);
     display: flex;
     flex-direction: column;
@@ -28,6 +27,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    scrollbar-width: none;
 }
 
 .sidebar-content::-webkit-scrollbar {
@@ -51,9 +51,9 @@
 
 .sidebar.collapsed .nav-item span,
 .sidebar.collapsed .sub-menu,
-.sidebar.collapsed .dropdown-arrow, 
+.sidebar.collapsed .dropdown-arrow,
 .sidebar.collapsed .logout a span,
-.sidebar.collapsed .nav-item:hover::before, 
+.sidebar.collapsed .nav-item:hover::before,
 .sidebar.collapsed .nav-item.active::before {
     display: none;
 }
@@ -102,18 +102,12 @@
 }
 
 .nav-item.active {
-    /* background-color: #FFE3E3; */
     color: var(--primary-color);
     font-weight: 600;
-    /* background-color: var(--primary-color);
-    color: var(--foreground-color);
-    transition: all 0.3s ease-in-out; */
 }
 
 .nav-item:hover {
     background-color: #FFF1D4;
-    /* background-color: var(--primary-color);
-    color: var(--foreground-color); */
 }
 
 .nav-item:hover::before {
@@ -179,7 +173,6 @@
 }
 
 
-
 /* ----- LOG OUT STYLING ----- */
 .logout {
     bottom: 0;
@@ -187,7 +180,7 @@
 }
 
 .logout a {
-    background-color: var(--background-color);
+    background-color: var(--table-row-color);
     position: relative;
     display: flex;
     align-items: center;
@@ -200,7 +193,7 @@
 }
 
 .logout a:hover {
-    background-color: var(--table-header-color);
+    background-color: var(--table-row-hover-color);
     color: var(--primary-color);
     font-weight: 600;
 }

@@ -35,7 +35,7 @@
 }
 
 .modal::-webkit-scrollbar-track {
-    background-color: var(--table-header-color);
+    background-color: var(--table-row-color);
 	border-radius: 0 12px 12px 0;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .close-modal-btn:hover {
-	background-color: var(--table-header-color);
+    background-color: var(--table-row-color);
 }
 
 .modal-heading {
@@ -71,6 +71,13 @@
 	font-weight: 700;
 }
 
+.modal-subtitle {
+	font-size: 18px;
+	font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
 .modal-date-time {
 	display: flex;
 	flex-direction: row;
@@ -80,7 +87,7 @@
 }
 
 .modal-content {
-	background-color: var(--table-header-color);
+    background-color: var(--table-row-color);
 	padding: 16px;
 	margin: 10px 0;
 	margin-bottom: 20px;
@@ -124,14 +131,14 @@
 
 /* add another stock button */
 .modal-actions .add-another-btn {
-    width: 170px;
+    width: 200px;
     height: 35px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
     border-radius: 8px;
-    background-color: var(--table-header-color);
+    background-color: var(--table-row-color);
     font-size: 14px;
 	font-weight: 600;
     transition: all 0.3s ease-in-out;
@@ -139,7 +146,7 @@
 }
 
 .modal-actions .add-another-btn:hover {
-    background-color: var(--table-header-hover-color);
+    background-color: var(--table-row-hover-color);
 }
 
 .modal-actions .add-another-btn i {
@@ -148,13 +155,14 @@
 
 /* remove stock button */
 .remove-btn-wrapper {
-    margin-top: 16px;
+    margin-top: 12px;
     display: flex;
     flex-direction: row;
     justify-content: right;
 }
 
-.remove-btn-wrapper .remove-stock-btn {
+.remove-btn-wrapper .remove-stock-btn,
+.remove-btn-wrapper .remove-request-btn {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -169,8 +177,26 @@
     cursor: pointer;
 }
 
-.remove-btn-wrapper .remove-stock-btn:hover {
-    background-color: var(--table-header-hover-color);
+.remove-btn-wrapper .remove-stock-btn:hover,
+.remove-btn-wrapper .remove-request-btn:hover {
+    background-color: var(--table-row-hover-color);
+}
+
+/* remove expired button */
+.remove-btn-wrapper.expired {
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+}
+
+.remove-btn-wrapper.expired .remove-stock-btn{
+    padding: 0 3px;
+    background-color: transparent;
+    color: var(--error-color);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
 }
 
 /* delete stock button */
@@ -195,7 +221,7 @@
     width: 120px;
     height: 35px;
     border-radius: 8px;
-    background-color: var(--table-header-color);
+    background-color: var(--table-row-color);
     font-size: 14px;
     font-weight: 600;
     transition: all 0.3s ease-in-out;
@@ -203,7 +229,7 @@
 }
 
 .modal-actions.delete .cancel-btn:hover {
-    background-color: var(--table-header-hover-color);
+    background-color: var(--table-row-hover-color);
 }
 
 /* preview pdf button */
