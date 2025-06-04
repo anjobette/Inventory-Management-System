@@ -5,11 +5,11 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // url      = "postgresql://postgres:obGVLTjkBfaLNAuADJifzuVjTTEmpjcW@crossover.proxy.rlwy.net:36212/railway"
 }
 
 model InventoryItem {
   item_id       String          @id @db.VarChar(10)
-  // f_item_id     String          @db.VarChar(10)
   category_id   String
   item_name     String          @db.VarChar(100)
   unit_measure  String          @db.VarChar(20)
@@ -19,8 +19,9 @@ model InventoryItem {
   date_created  DateTime        @default(now())
   date_updated  DateTime        @updatedAt
   isdeleted     Boolean         @default(false)
-  created_by    Int
+  created_by    String
   batches       Batch[]
+  // employeeRequests EmployeeRequest[]
   category      Category        @relation(fields: [category_id], references: [category_id])
 
   @@map("inventory_items")
@@ -35,7 +36,7 @@ model Batch {
   missing_quantity   Int           @default(0)
   expiration_date    DateTime?
   date_created       DateTime      @default(now())
-  created_by         Int
+  created_by         String
   isdeleted          Boolean       @default(false)
   inventoryItem      InventoryItem @relation(fields: [item_id], references: [item_id])
 
@@ -52,6 +53,25 @@ model Category {
   @@map("categories")
 }
 
+// model EmployeeRequest {
+//   request_id    String          @id @db.VarChar(10)
+//   item_id       String            
+//   emp_id        String          @db.VarChar(10)
+//   request_type  RequestType     
+//   quantity      Int
+//   req_purpose String          @db.VarChar(255)
+//   status        RequestStatus   
+//   expected_return_date DateTime?
+//   actual_return_date DateTime?
+//   date_created  DateTime        @default(now())
+//   date_updated  DateTime        @updatedAt
+//   isdeleted     Boolean         @default(false)
+//   created_by    Int
+//   inventoryItem InventoryItem   @relation(fields: [item_id], references: [item_id])
+
+//   @@map("employee_requests")
+// }
+
 enum InventoryStatus {
   LOW_STOCK
   AVAILABLE
@@ -59,3 +79,14 @@ enum InventoryStatus {
   UNDER_MAINTENANCE
   EXPIRED
 }
+
+// enum RequestType {
+//   BORROW
+//   CONSUME
+// }
+
+// enum RequestStatus {
+//   RETURNED
+//   NOT_RETURNED
+//   CONSUMED
+// }

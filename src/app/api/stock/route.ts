@@ -63,19 +63,61 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH (req: NextRequest) {
-
     if (req.method === 'PATCH') {
         try {
             const { batch_id } = await req.json();
     
-          await prisma.batch.update({
-              where: { batch_id: String(batch_id) },
-              data: { isdeleted: true },
-          });
-          return NextResponse.json({ success: true });
-      } catch (error) {
-          console.error("Delete error:", error);
-          return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
-      }
-  }
+            // First, get the batch data to retrieve usable_quantity and item_id
+            const batch = await prisma.batch.findUnique({
+                where: { batch_id: String(batch_id) },
+                select: {
+                    usable_quantity: true,
+                    item_id: true,
+                    isdeleted: true
+                }
+            });
+
+            if (!batch) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: "Batch not found" 
+                }, { status: 404 });
+            }
+
+            if (batch.isdeleted) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: "Batch is already deleted" 
+                }, { status: 400 });
+            }
+
+            // Use a transaction to ensure both operations succeed or fail together
+            await prisma.$transaction(async (tx) => {
+                // Mark batch as deleted
+                await tx.batch.update({
+                    where: { batch_id: String(batch_id) },
+                    data: { isdeleted: true },
+                });
+
+                // Subtract usable_quantity from current_stock
+                await tx.inventoryItem.update({
+                    where: { item_id: batch.item_id },
+                    data: {
+                        current_stock: {
+                            decrement: batch.usable_quantity
+                        }
+                    }
+                });
+            });
+
+            return NextResponse.json({ success: true });
+        } catch (error) {
+            console.error("Delete error:", error);
+            return NextResponse.json({ 
+                success: false, 
+                error: (error as Error).message 
+            }, { status: 500 });
+        }
+    }
 }
+
