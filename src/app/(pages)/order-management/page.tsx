@@ -59,7 +59,7 @@ export default function OrderManagement() {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
+    const [pageSize, setPageSize] = useState(10); // default number of rows per page
 
     // Calculate paginated data
     const paginatedData = useMemo(() => {
