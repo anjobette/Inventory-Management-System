@@ -13,7 +13,9 @@ async function main() {
     const categoryData = [
       { category_name: 'Consumable', date_created: new Date('2025-04-01') },
       { category_name: 'Bus', date_created: new Date('2025-04-16') },
-      { category_name: 'Machine & Equipment', date_created: new Date('2025-04-30') }
+      { category_name: 'Tool', date_created: new Date('2025-04-30') },
+      { category_name: 'Equipment', date_created: new Date('2025-04-30') },
+      { category_name: 'Machine', date_created: new Date('2025-04-30') }
     ];
 
     const categories = [];

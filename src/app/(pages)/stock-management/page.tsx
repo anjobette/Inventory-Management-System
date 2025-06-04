@@ -58,7 +58,7 @@ export default function StocksManagement() {
 
     // Pagination state - Updated to match old file's approach
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5); // Default to 5 like the old file
+    const [pageSize, setPageSize] = useState(10); // Default to 5 like the old file
 
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -106,7 +106,9 @@ export default function StocksManagement() {
             type: "checkbox",
             options: [
                 { id: "Consumable", label: "Consumables" },
-                { id: "Machine & Equipment", label: "Machine & Equipments" }
+                { id: "Tool", label: "Tools" },
+                { id: "Machine", label: "Machines" },
+                { id: "Equipment", label: "Equipments" }
             ]
         },
         {

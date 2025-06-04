@@ -54,7 +54,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
                     className="pagination-dropdown"
                     onChange={(e) => onPageSizeChange(Number(e.target.value))}
                 >
-                    {[5, 10, 20, 50].map((size) => (
+                    {[10, 20, 30, 50].map((size) => (
                         <option key={size} value={size}>
                             {size} /page
                         </option>
