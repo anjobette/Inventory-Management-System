@@ -60,7 +60,7 @@ export default function StocksManagement() {
 
     // Pagination state - Updated to match old file's approach
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5); // Default to 5 like the old file
+    const [pageSize, setPageSize] = useState(10); // default number of rows per page
 
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
