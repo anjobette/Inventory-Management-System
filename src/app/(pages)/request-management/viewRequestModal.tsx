@@ -73,13 +73,14 @@ export default function ViewRequestModal({ item, formatStatus, onClose }: ViewRe
 								<p>11/22/2025</p>
 							</div>
 
-							<div className="form-group">
-								<label>Actual Return Date</label>
-								<p>11/22/2025</p>
-							</div>
+							{item.reqStatus !== "not-returned" && (
+								<div className="form-group">
+									<label>Actual Return Date</label>
+									<p>11/22/2025</p>
+								</div>
+							)}
 						</div>
 					)}
-
 				</div>
 			</div>
 		</>

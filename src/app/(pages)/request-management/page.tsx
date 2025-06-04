@@ -36,7 +36,7 @@ const hardcodedData = [
     {
         id: 3,
         empName: "Christelle Anne Dacapias",
-        type: "Consume",
+        type: "Borrow",
         itemName: "Item Example B",
         reqDate: "4/27/2025",
         reqStatus: "not-returned",
