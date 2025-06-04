@@ -198,7 +198,7 @@ export default function FilterDropdown({
     return (
         <div className={`filter ${className}`}>
             <button className="filter-btn" onClick={toggleDropdown}>
-                <i className="ri-equalizer-line" /> Filter
+                <i className="ri-equalizer-line" /> Filters
             </button>
 
             {isOpen && (

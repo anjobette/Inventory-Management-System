@@ -24,7 +24,7 @@ export default function EditOrderModal({ item, onSave, onClose }: EditOrderModal
     const [formData, setFormData] = useState({
         id: item.id,
         itemName: item.itemName,
-        ordQuantity: 0, // Default value, would be populated from item in a real app
+        ordQuantity: item.ordQuantity,
         ordStatus: item.ordStatus,
         ordReason: ""
     });
