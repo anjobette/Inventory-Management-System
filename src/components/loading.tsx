@@ -3,7 +3,7 @@ import "@/styles/loading.css"
 export default function Loading() {
     return (
         <div className="fetch-container">
-            <div className="loading-box">
+            <div className="loading-bus">
                 <div className="wheel"></div>
                 <div className="wheel"></div>
             </div>
