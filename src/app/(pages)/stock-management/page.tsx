@@ -5,6 +5,7 @@ import ActionButtons from "@/components/actionButtons";
 import ModalManager from "@/components/modalManager";
 import FilterDropdown, { FilterSection } from "@/components/filterDropdown";
 import PaginationComponent from "@/components/pagination";
+import Loading from "@/components/loading";
 import { showStockDeleteConfirmation, showStockDeletedSuccess, showStockSaveError, showDeleteError } from "@/utils/sweetAlert";
 
 import AddStockModal from "./addStockModal";
@@ -15,6 +16,7 @@ import { StockForm } from "./addStockModal";
 import "@/styles/filters.css"
 import "@/styles/tables.css"
 import "@/styles/chips.css"
+import "@/styles/loading.css"
 
 // Type definitions based on your Prisma schema
 interface InventoryItem {
@@ -58,7 +60,7 @@ export default function StocksManagement() {
 
     // Pagination state - Updated to match old file's approach
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5); // Default to 5 like the old file
+    const [pageSize, setPageSize] = useState(10); // default number of rows per page
 
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -92,7 +94,7 @@ export default function StocksManagement() {
         }
     };
 
-     // Filter sections for the filter dropdown - Enhanced with proper categories
+    // Filter sections for the filter dropdown - Enhanced with proper categories
     const filterSections: FilterSection[] = [
         {
             id: "dateRange",
@@ -164,7 +166,7 @@ export default function StocksManagement() {
         if (filterValues.category && filterValues.category.length > 0) {
             filtered = filtered.filter(item => filterValues.category.includes(item.category.category_name));
         }
-        
+
         if (filterValues.dateRange && (filterValues.dateRange.from || filterValues.dateRange.to)) {
             filtered = filtered.filter(item => {
                 const itemDate = new Date(item.date_updated);
@@ -183,7 +185,7 @@ export default function StocksManagement() {
                 else if (toDate) {
                     return itemDate <= toDate;
                 }
-                
+
                 return true;
             });
         }
@@ -231,10 +233,10 @@ export default function StocksManagement() {
 
     const getDateRangeDisplay = () => {
         if (!filterValues.dateRange) return null;
-        
+
         const { from, to } = filterValues.dateRange;
         if (!from && !to) return null;
-        
+
         const formatDate = (dateString: string) => {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -242,7 +244,7 @@ export default function StocksManagement() {
                 day: 'numeric'
             });
         };
-        
+
         if (from && to) {
             return `Items filtered from ${formatDate(from)} to ${formatDate(to)}`;
         } else if (from) {
@@ -250,7 +252,7 @@ export default function StocksManagement() {
         } else if (to) {
             return `Items filtered up to ${formatDate(to)}`;
         }
-        
+
         return null;
     };
 
@@ -394,7 +396,7 @@ export default function StocksManagement() {
         closeModal();
     };
 
-   // Handle delete stocks
+    // Handle delete stocks
     const handleDeleteStock = async (rowData: any) => {
         try {
             const result = await showStockDeleteConfirmation(rowData.name || rowData.item_name);
@@ -408,15 +410,15 @@ export default function StocksManagement() {
                     },
                     body: JSON.stringify({ item_id: rowData.item_id }),
                 });
-                
+
                 const data = await response.json();
                 if (data.success) {
                     await showStockDeletedSuccess(rowData.name || rowData.item_name);
                     window.location.reload();
                     console.log("Deleted row with id:", rowData.id);
                 } else {
-                        await showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
-                    }
+                    await showDeleteError(rowData.item_name || rowData.name, rowData.current_stock);
+                }
             }
         } catch (error) {
             console.error('Error deleting stock:', error);
@@ -428,9 +430,7 @@ export default function StocksManagement() {
         return (
             <div className="card">
                 <h1 className="title">Stock Management</h1>
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    Loading stock items...
-                </div>
+                <Loading />
             </div>
         );
     }
@@ -439,10 +439,12 @@ export default function StocksManagement() {
         return (
             <div className="card">
                 <h1 className="title">Stock Management</h1>
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
-                    Error: {error}
-                    <br />
-                    <button onClick={fetchStockItems} style={{ marginTop: '1rem' }}>
+                <div className="fetch-container">
+                    <div className="fetch-error">
+                        <i className="ri-error-warning-line" />
+                        {error}
+                    </div>
+                    <button className="retry-btn" onClick={fetchStockItems}>
                         Retry
                     </button>
                 </div>
@@ -511,8 +513,8 @@ export default function StocksManagement() {
                                 {paginatedItems.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="no-records">
-                                            {searchTerm || Object.keys(filterValues).some(key => 
-                                                filterValues[key] && 
+                                            {searchTerm || Object.keys(filterValues).some(key =>
+                                                filterValues[key] &&
                                                 (Array.isArray(filterValues[key]) ? filterValues[key].length > 0 : true)
                                             )
                                                 ? 'No items matched'
@@ -536,15 +538,15 @@ export default function StocksManagement() {
                                                 </span>
                                             </td>
                                             <td>{item.reorder_level}</td>
-                                        <td>
-                                            <ActionButtons
-                                                onView={() => openModal("view-stock", item)}
-                                                onEdit={() => openModal("edit-stock", item)}
-                                                onDelete={() => openModal("delete-stock", item)}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
+                                            <td>
+                                                <ActionButtons
+                                                    onView={() => openModal("view-stock", item)}
+                                                    onEdit={() => openModal("edit-stock", item)}
+                                                    onDelete={() => openModal("delete-stock", item)}
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))
                                 )}
                             </tbody>
                         </table>
