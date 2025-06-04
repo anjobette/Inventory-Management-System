@@ -159,7 +159,7 @@ export default function EditStockModal({ item, onSave, onClose }: EditStockModal
 	};
 
 	// Check if status should be disabled based on category
-	const isStatusDisabled = formData.category.toLowerCase() === "consumable";
+	const isStatusDisabled = formData.category.toLowerCase() === "consumable" ;
 
 	return (
 		<>

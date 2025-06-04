@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
             where: { 
               category_name: item.category === 'Consumable' 
                 ? 'Consumable' 
-                : 'Machine & Equipment'
+                : item.category
             }
           });
 
