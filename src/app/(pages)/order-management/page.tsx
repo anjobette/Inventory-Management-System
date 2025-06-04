@@ -297,7 +297,7 @@ export default function OrderManagement() {
                                     >
                                         <td>{item.itemName}</td>
                                         <td>{item.ordQuantity}</td>
-                                        <td>
+                                        <td className="table-status">
                                             <span className={`chip ${item.ordStatus}`}>
                                                 {formatStatus(item.ordStatus)}
                                             </span>

@@ -392,7 +392,7 @@ export default function RequestManagement() {
                                         <td>{item.empName}</td>
                                         <td>{item.type}</td>
                                         <td>{item.itemName}</td>
-                                        <td>
+                                        <td className="table-status">
                                             <span className={`chip ${item.reqStatus}`}>
                                                 {formatStatus(item.reqStatus)}
                                             </span>

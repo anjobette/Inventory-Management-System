@@ -12,7 +12,7 @@
 .pagination-dropdown {
     max-width: max-content;
     padding: 6px;
-    color: var(--border-color);
+    color: var(--secondary-text-color);
     background-color: var(--foreground-color);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -52,6 +52,11 @@
     transition: all 0.3s ease-in-out;
 }
 
+.pagination-button-prevnext {
+    color: var(--secondary-text-color);
+    opacity: 0.6;
+}
+
 .pagination-button:hover,
 .pagination-button-prevnext:hover {
     background-color: var(--table-row-color);
@@ -69,7 +74,7 @@
 
 .pagination-button-prevnext:disabled {
     background-color: transparent;
-    color: var(--table-header-color);
+    color: var(--border-color);
     cursor: not-allowed;
 }
 
@@ -94,14 +99,14 @@
     align-items: center;
     gap: 5px;
     font-size: 14px;
-    color: var(--border-color);
+    color: var(--secondary-text-color);
 }
 
 .pagination-input {
     width: max-content;
     max-width: 80px;
     padding: 4px;
-    color: var(--border-color);
+    color: var(--secondary-text-color);
     background-color: var(--foreground-color);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -117,7 +122,7 @@
 .pagination-go-button {
     padding: 4.5px 8px;
     background-color: var(--border-color);
-    color: var(--foreground-color);
+    color: var(--secondary-text-color);
     cursor: pointer;
     border-radius: 6px;
     font-size: 14px;

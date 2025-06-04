@@ -9,7 +9,7 @@ import "@/styles/forms.css";
 
 interface EditBusModalProps {
     item: {
-        id: number;
+        id: number,
         bodyNumber: string,
         bodyBuilder: string,
         busType: string,

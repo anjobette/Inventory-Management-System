@@ -127,6 +127,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
                     Go to:
                     <input
                         type="number"
+                        min={1}
                         value={jumpToPage}
                         onChange={(e) => setJumpToPage(e.target.value)}
                         placeholder="Page #"

@@ -2,7 +2,7 @@ import "@/styles/forms.css";
 
 interface ViewBusModalProps {
     item: {
-        id: number;
+        id: number,
         bodyNumber: string,
         bodyBuilder: string,
         busType: string,
