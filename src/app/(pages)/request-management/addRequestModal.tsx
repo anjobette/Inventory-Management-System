@@ -6,12 +6,25 @@ import {
 } from "@/utils/sweetAlert";
 
 import "@/styles/forms.css";
+import { fetchEmployees, Employee } from '../../lib/fetchEmployees';
+
+// Enums to match your Prisma schema
+enum RequestType {
+	BORROW = 'BORROW',
+	CONSUME = 'CONSUME'
+}
+
+enum RequestStatus {
+	RETURNED = 'RETURNED',
+	NOT_RETURNED = 'NOT_RETURNED',
+	CONSUMED = 'CONSUMED'
+}
 
 // Export the interface so it can be imported by other components
 export interface RequestForm {
 	empName: string,
-	type: string,
-	reqStatus: string,
+	type: RequestType | '',
+	reqStatus: RequestStatus | '',
 	itemName: string,
 	reqQuantity: number,
 	purpose: string,
@@ -42,11 +55,76 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 	const [requestForms, setRequestForms] = useState<RequestForm[]>([initialFormState]);
 	const [formErrors, setFormErrors] = useState<FormError[]>([{}]);
 	const [isDirty, setIsDirty] = useState(false);
+	const [employees, setEmployees] = useState<Employee[]>([]);
+	const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+	const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
+	const [isLoadingItems, setIsLoadingItems] = useState(true);
+
+	// Fetch employees when component mounts
+	useEffect(() => {
+		const loadEmployees = async () => {
+			try {
+				setIsLoadingEmployees(true);
+				const employeeData = await fetchEmployees();
+				
+				// Sort employees alphabetically by full name (first name + last name)
+				const sortedEmployees = employeeData.sort((a, b) => {
+					const fullNameA = `${a.emp_first_name} ${a.emp_last_name}`.toLowerCase();
+					const fullNameB = `${b.emp_first_name} ${b.emp_last_name}`.toLowerCase();
+					return fullNameA.localeCompare(fullNameB);
+				});
+				
+				setEmployees(sortedEmployees);
+			} catch (error) {
+				console.error('Failed to load employees:', error);
+			} finally {
+				setIsLoadingEmployees(false);
+			}
+		};
+
+		loadEmployees();
+	}, []);
+
+	// Fetch inventory items when component mounts
+	useEffect(() => {
+		const loadInventoryItems = async () => {
+			try {
+				setIsLoadingItems(true);
+				const response = await fetch('/api/item');
+				
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				
+				const itemsData = await response.json();
+				
+				setInventoryItems(itemsData.items || []);
+			} catch (error) {
+				console.error('Failed to load inventory items:', error);
+			} finally {
+				setIsLoadingItems(false);
+			}
+		};
+
+		loadInventoryItems();
+	}, []);
 
 	// Track if any form has been modified
 	useEffect(() => {
 		setIsDirty(true);
 	}, [requestForms]);
+
+	// Helper function to determine status based on request type
+	const getStatusFromRequestType = (requestType: RequestType | ''): RequestStatus | '' => {
+		switch (requestType) {
+			case RequestType.BORROW:
+				return RequestStatus.NOT_RETURNED;
+			case RequestType.CONSUME:
+				return RequestStatus.CONSUMED;
+			default:
+				return '';
+		}
+	};
 
 	const handleFormChange = (index: number, field: string, value: any) => {
 		if (field === "empName") {
@@ -62,17 +140,26 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 				setFormErrors(newErrors);
 			}
 		} else if (field === "type") {
-			// Clear reqStatus when type changes
+			// Update type and automatically set status based on request type
+			const newStatus = getStatusFromRequestType(value as RequestType);
+			
 			setRequestForms((prev) =>
 				prev.map((form, i) =>
-					i === index ? { ...form, [field]: value, reqStatus: "" } : form
+					i === index ? { 
+						...form, 
+						[field]: value, 
+						reqStatus: newStatus,
+						// Clear expectedDate if changing from borrow to consume
+						expectedDate: value === RequestType.CONSUME ? "" : form.expectedDate
+					} : form
 				)
 			);
 
-			// Clear the error for that field
-			if (formErrors[index]?.[field]) {
+			// Clear the error for that field and reqStatus
+			if (formErrors[index]?.[field] || formErrors[index]?.reqStatus) {
 				const newErrors = [...formErrors];
 				delete newErrors[index][field];
+				delete newErrors[index].reqStatus;
 				setFormErrors(newErrors);
 			}
 		} else {
@@ -99,7 +186,6 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 		setFormErrors((prev) => [...prev, {}]);
 	};
 
-
 	const handleRemoveRequest = (index: number) => {
 		setRequestForms((prev) => prev.filter((_, i) => i !== index));
 		setFormErrors((prev) => prev.filter((_, i) => i !== index));
@@ -116,8 +202,8 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 			if (form.reqQuantity <= 0) errorObj.reqQuantity = "Quantity must be more than 0";
 			if (!form.purpose) errorObj.purpose = "Request purpose is required";
 
-			// Validate expectedDate only if type is "borrow"
-			if (form.type === "borrow") {
+			// Validate expectedDate only if type is "BORROW"
+			if (form.type === RequestType.BORROW) {
 				if (!form.expectedDate) {
 					errorObj.expectedDate = "Expected return date is required";
 				} else {
@@ -162,28 +248,6 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 		}
 	};
 
-	// Helper function to get status options based on request type
-	const getStatusOptions = (type: string) => {
-		if (type === "borrow") {
-			return (
-				<>
-					<option value="" disabled>Select status...</option>
-					{/* <option value="returned">Returned</option> */}
-					<option value="not-returned">Not Returned</option>
-				</>
-			);
-		} else if (type === "consume") {
-			return (
-				<>
-					<option value="" disabled>Select status...</option>
-					<option value="consumed">Consumed</option>
-				</>
-			);
-		} else {
-			return <option value="" disabled>Select status...</option>;
-		}
-	};
-
 	return (
 		<>
 			<div className="modal-heading">
@@ -207,18 +271,21 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 							className={formErrors[0]?.empName ? "invalid-input" : ""}
 							value={requestForms[0].empName}
 							onChange={(e) => handleFormChange(0, 'empName', e.target.value)}
+							disabled={isLoadingEmployees}
 						>
-							<option value="" disabled>Select employee name...</option>
-							<option value="1">Bette Anjanelle Cabarles</option>
-							<option value="2">Kristine Mae Cleofas</option>
-							<option value="3">Christelle Anne Dacapias</option>
-							<option value="4">Nerie Ann Bravo</option>
+							<option value="" disabled>
+								{isLoadingEmployees ? "Loading employees..." : "Select employee name..."}
+							</option>
+							{employees.map((employee) => (
+								<option key={employee.emp_id} value={employee.emp_id}>
+									{`${employee.emp_first_name} ${employee.emp_last_name}`}
+								</option>
+							))}
 						</select>
 						<p className="add-error-message">{formErrors[0]?.empName}</p>
 					</div>
 				</form>
 			</div>
-
 
 			{/* Add Request Form - allows adding multiple requests */}
 			{requestForms.map((form, index) => (
@@ -234,23 +301,27 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 									onChange={(e) => handleFormChange(index, "type", e.target.value)}
 								>
 									<option value="" disabled>Select request type...</option>
-									<option value="borrow">Borrow</option>
-									<option value="consume">Consume</option>
+									<option value={RequestType.BORROW}>Borrow</option>
+									<option value={RequestType.CONSUME}>Consume</option>
 								</select>
 								<p className="add-error-message">{formErrors[index]?.type}</p>
 							</div>
 
-							{/* Status - Dynamic options based on request type */}
+							{/* Status - Display only, automatically determined by request type */}
 							<div className="form-group">
 								<label>Status</label>
-								<select
-									className={formErrors[index]?.reqStatus ? "invalid-input" : ""}
-									value={form.reqStatus}
-									onChange={(e) => handleFormChange(index, "reqStatus", e.target.value)}
-									disabled={!form.type} // Disable if no type is selected
-								>
-									{getStatusOptions(form.type)}
-								</select>
+								<input
+									type="text"
+									className="readonly-input"
+									value={
+										form.reqStatus === RequestStatus.NOT_RETURNED ? 'Not Returned' :
+										form.reqStatus === RequestStatus.CONSUMED ? 'Consumed' :
+										form.reqStatus === RequestStatus.RETURNED ? 'Returned' : ''
+									}
+									readOnly
+									disabled={!form.type}
+									placeholder={!form.type ? "" : ""}
+								/>
 								<p className="add-error-message">{formErrors[index]?.reqStatus}</p>
 							</div>
 						</div>
@@ -263,13 +334,16 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 									className={formErrors[index]?.itemName ? "invalid-input" : ""}
 									value={form.itemName}
 									onChange={(e) => handleFormChange(index, "itemName", e.target.value)}
+									disabled={isLoadingItems}
 								>
-									<option value="" disabled>Select item name...</option>
-									<option value="1">Item 1</option>
-									<option value="2">Item 2</option>
-									<option value="3">Item 3</option>
-									<option value="4">Item 4</option>
-									<option value="5">Item 5</option>
+									<option value="" disabled>
+										{isLoadingItems ? "Loading items..." : "Select item name..."}
+									</option>
+									{inventoryItems.map((item) => (
+										<option key={item.item_id} value={item.item_id}>
+											{item.item_name}
+										</option>
+									))}
 								</select>
 								<p className="add-error-message">{formErrors[index]?.itemName}</p>
 							</div>
@@ -280,7 +354,7 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 								<input
 									className={formErrors[index]?.reqQuantity ? "invalid-input" : ""}
 									type="number"
-									step="0.1"
+									step="1"
 									min="0"
 									value={form.reqQuantity}
 									onChange={(e) => handleFormChange(index, "reqQuantity", Number(e.target.value))}
@@ -302,8 +376,8 @@ export default function AddRequestModal({ onSave, onClose }: AddRequestModalProp
 							<p className="add-error-message">{formErrors[index]?.purpose}</p>
 						</div>
 
-						{/* Expected Return Date */}
-						{form.type === "borrow" && (
+						{/* Expected Return Date - Only show for BORROW requests */}
+						{form.type === RequestType.BORROW && (
 							<div className="form-group">
 								<label>Expected Return Date</label>
 								<input

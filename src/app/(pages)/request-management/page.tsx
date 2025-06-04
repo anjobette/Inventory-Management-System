@@ -16,6 +16,31 @@ import "@/styles/filters.css"
 import "@/styles/tables.css"
 import "@/styles/chips.css"
 
+// Type definitions based on your Prisma schema
+interface EmployeeRequest {
+    request_id: string;
+    item_id: string;
+    emp_id: string;
+    request_type: string;
+    quantity: number;
+    req_purpose: string;
+    status: string;
+    expected_return_date: string | null;
+    actual_return_date: string | null;
+    date_created: string;
+    date_updated: string;
+    inventory_items: {
+        item_id: string;
+        item_name: string;
+    }[];
+}
+
+interface ApiResponse {
+    success: boolean;
+    items: EmployeeRequest[];
+    error?: string;
+}
+
 const hardcodedData = [
     {
         id: 1,

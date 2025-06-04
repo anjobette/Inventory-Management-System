@@ -46,17 +46,17 @@ export async function generateId(
       idField = 'batch_id';
       break;
 
-      // case 'employeeRequest':
-      // lastEntry = await prisma.employeeRequest.findFirst({
-      //   orderBy: {
-      //     emp_id: 'desc'
-      //   },
-      //   select: {
-      //     emp_id: true
-      //   }
-      // });
-      // idField = 'emp_id';
-      // break;
+      case 'employeeRequest':
+      lastEntry = await prisma.employeeRequest.findFirst({
+        orderBy: {
+          emp_id: 'desc'
+        },
+        select: {
+          emp_id: true
+        }
+      });
+      idField = 'emp_id';
+      break;
   }
 
   const lastId = lastEntry ? lastEntry[idField!] : null;

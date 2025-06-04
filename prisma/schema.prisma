@@ -21,7 +21,7 @@ model InventoryItem {
   isdeleted     Boolean         @default(false)
   created_by    String
   batches       Batch[]
-  // employeeRequests EmployeeRequest[]
+  employeeRequests EmployeeRequest[]
   category      Category        @relation(fields: [category_id], references: [category_id])
 
   @@map("inventory_items")
@@ -53,24 +53,24 @@ model Category {
   @@map("categories")
 }
 
-// model EmployeeRequest {
-//   request_id    String          @id @db.VarChar(10)
-//   item_id       String            
-//   emp_id        String          @db.VarChar(10)
-//   request_type  RequestType     
-//   quantity      Int
-//   req_purpose String          @db.VarChar(255)
-//   status        RequestStatus   
-//   expected_return_date DateTime?
-//   actual_return_date DateTime?
-//   date_created  DateTime        @default(now())
-//   date_updated  DateTime        @updatedAt
-//   isdeleted     Boolean         @default(false)
-//   created_by    Int
-//   inventoryItem InventoryItem   @relation(fields: [item_id], references: [item_id])
+model EmployeeRequest {
+  request_id    String          @id @db.VarChar(10)
+  item_id       String            
+  emp_id        String          @db.VarChar(10)
+  request_type  RequestType     
+  quantity      Int
+  req_purpose String          @db.VarChar(255)
+  status        RequestStatus   
+  expected_return_date DateTime?
+  actual_return_date DateTime?
+  date_created  DateTime        @default(now())
+  date_updated  DateTime        @updatedAt
+  isdeleted     Boolean         @default(false)
+  created_by    Int
+  inventoryItem InventoryItem   @relation(fields: [item_id], references: [item_id])
 
-//   @@map("employee_requests")
-// }
+  @@map("employee_requests")
+}
 
 enum InventoryStatus {
   LOW_STOCK
@@ -80,13 +80,13 @@ enum InventoryStatus {
   EXPIRED
 }
 
-// enum RequestType {
-//   BORROW
-//   CONSUME
-// }
+enum RequestType {
+  BORROW
+  CONSUME
+}
 
-// enum RequestStatus {
-//   RETURNED
-//   NOT_RETURNED
-//   CONSUMED
-// }
+enum RequestStatus {
+  RETURNED
+  NOT_RETURNED
+  CONSUMED
+}
