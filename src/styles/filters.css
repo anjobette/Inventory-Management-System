@@ -245,3 +245,13 @@
 .filter-actions .apply-btn:hover {
     background-color: var(--primary-hover-color);
 }
+
+
+/* ----- FILTER RESULT STYLING ----- */
+.filter-results {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--secondary-text-color);
+    margin-bottom: 10px;
+    padding-left: 5px;
+}
