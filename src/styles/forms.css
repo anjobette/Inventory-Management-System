@@ -126,7 +126,7 @@
 
 /* ----- MODAL FORMS STYLING: VIEW ----- */
 .modal-content.view {
-    width: 550px;
+    min-width: 550px;
     display: flex;
     justify-content: space-between;
     gap: 15px;
@@ -135,7 +135,7 @@
 
 .modal-content.view-expired {
     background-color: var(--error-chip-bg-color);
-    width: 550px;
+    min-width: 550px;
     display: flex;
     justify-content: space-between;
     gap: 15px;
