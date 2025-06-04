@@ -67,7 +67,7 @@
     top: 6px;
     left: 8px;
     width: 12px;
-    height: 8px;
+    height: 12px;
     background: var(--primary-color);
     border-radius: 2px;
     box-shadow: 
@@ -80,8 +80,8 @@
 .loading-box .wheel {
     position: absolute;
     bottom: -8px;
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     background-color: var(--foreground-color);
     border: 5px solid var(--primary-text-color);
     border-radius: 50%;
