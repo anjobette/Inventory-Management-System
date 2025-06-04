@@ -116,22 +116,6 @@ export default function FilterDropdown({
         });
     };
 
-    // Handle text input changes
-    const handleTextChange = (sectionId: string, value: string) => {
-        setFilterValues({
-            ...filterValues,
-            [sectionId]: value
-        });
-    };
-
-    // Handle select changes
-    const handleSelectChange = (sectionId: string, value: string) => {
-        setFilterValues({
-            ...filterValues,
-            [sectionId]: value
-        });
-    };
-
     // Apply filters
     const handleApply = () => {
         onApply(filterValues);
