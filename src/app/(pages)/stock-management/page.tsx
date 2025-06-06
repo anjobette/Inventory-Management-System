@@ -217,12 +217,15 @@ export default function StocksManagement() {
                     bValue = b.item_name.toLowerCase();
             }
 
-            if (typeof aValue === "string") {
+            // Use type guards to ensure correct typing
+            if (typeof aValue === "string" && typeof bValue === "string") {
                 const comparison = aValue.localeCompare(bValue);
                 return order === "asc" ? comparison : -comparison;
-            } else {
+            } else if (typeof aValue === "number" && typeof bValue === "number") {
                 const comparison = aValue - bValue;
                 return order === "asc" ? comparison : -comparison;
+            } else {
+                return 0; // fallback in case of type mismatch (should not occur)
             }
         });
 
