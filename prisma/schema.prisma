@@ -4,8 +4,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
   // url      = "postgresql://postgres:obGVLTjkBfaLNAuADJifzuVjTTEmpjcW@crossover.proxy.rlwy.net:36212/railway"
+  url      = "postgresql://postgres:ahPlWkZoDRdvmKptXQPXqSHplILdXlbd@hopper.proxy.rlwy.net:29736/railway"
 }
 
 model InventoryItem {
