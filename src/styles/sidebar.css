@@ -7,12 +7,12 @@
 }
 
 .logo-img img {
-    width: 70%;
+    width: 80%;
 }
 
 .sidebar {
     position: relative;
-    width: calc(100% * 8 / 34);
+    width: calc(100% * 6 / 34);
     background-color: var(--foreground-color);
     display: flex;
     flex-direction: column;

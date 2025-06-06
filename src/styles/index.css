@@ -38,8 +38,8 @@
 }
 
 .page-content {
-    width: calc(100% * 24 / 26);
-    height: calc(100% * 19 / 21);
+    width: calc(100% * 25 / 26);
+    height: calc(100% * 20 / 21);
 }
 
 .card {
@@ -57,7 +57,7 @@
 .card .title {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .card .elements {
